@@ -993,7 +993,7 @@ class LintChecksManager(object):
         parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
 
         node_path = os.path.join(
-            parent_dir, 'oppia_tools', 'node-6.9.1', 'bin', 'node')
+            parent_dir, 'oppia_tools', 'node-10.15.3', 'bin', 'node')
         eslint_path = os.path.join(
             parent_dir, 'node_modules', 'eslint', 'bin', 'eslint.js')
         stylelint_path = os.path.join(
@@ -1851,7 +1851,7 @@ class LintChecksManager(object):
         parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
 
         node_path = os.path.join(
-            parent_dir, 'oppia_tools', 'node-6.9.1', 'bin', 'node')
+            parent_dir, 'oppia_tools', 'node-10.15.3', 'bin', 'node')
         htmllint_path = os.path.join(
             parent_dir, 'node_modules', 'htmllint-cli', 'bin', 'cli.js')
 
