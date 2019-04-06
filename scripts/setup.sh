@@ -267,7 +267,7 @@ install_node_module() {
   # module_name: the name of the node module
   # module_version: the expected version of the module
 
-  echo Checking whether $1 is installed
+  echo Checking whether $1 is installed 
   if [ ! -d "$NODE_MODULE_DIR/$1" ]; then
     echo installing $1
     $NPM_INSTALL $1@$2
