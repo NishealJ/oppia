@@ -20,16 +20,18 @@
 // current-interaction.service.ts is upgraded to Angular 8.
 import { AngularNameService } from
   'pages/exploration-editor-page/services/angular-name.service';
-import { EditabilityService } from 'services/EditabilityService';
+import { DebugInfoTrackerService } from 'services/debug-info-tracker.service';
+import { EditabilityService } from 'services/editability.service';
 /* eslint-disable max-len */
 import { SolutionValidityService } from
   'pages/exploration-editor-page/editor-tab/services/solution-validity.service';
 import { StateEditorService } from
   'components/state-editor/state-editor-properties-services/state-editor.service';
 /* eslint-enable max-len */
-import { SuggestionModalService } from 'services/SuggestionModalService';
+import { SuggestionModalService } from 'services/suggestion-modal.service';
 import { VoiceoverObjectFactory } from
   'domain/exploration/VoiceoverObjectFactory';
+import { UpgradedServices } from 'services/UpgradedServices';
 // ^^^ This block is to be removed.
 
 require(
@@ -37,6 +39,12 @@ require(
 
 describe('Current Interaction Service', function() {
   beforeEach(angular.mock.module('oppia'));
+  beforeEach(angular.mock.module('oppia', function($provide) {
+    var ugs = new UpgradedServices();
+    for (let [key, value] of Object.entries(ugs.getUpgradedServices())) {
+      $provide.value(key, value);
+    }
+  }));
 
   // This mock is required since ContextService is used in
   // CurrentInteractionService to obtain the explorationId. So, in the
@@ -51,6 +59,7 @@ describe('Current Interaction Service', function() {
         }
       });
       $provide.value('AngularNameService', new AngularNameService());
+      $provide.value('DebugInfoTrackerService', new DebugInfoTrackerService());
       $provide.value('EditabilityService', new EditabilityService());
       $provide.value('SolutionValidityService', new SolutionValidityService());
       $provide.value(

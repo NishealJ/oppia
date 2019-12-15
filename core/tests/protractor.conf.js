@@ -25,8 +25,16 @@ var suites = {
       'protractor_desktop/additionalPlayerFeatures.js'
     ],
 
+    adminPage: [
+      'protractor_desktop/adminTabFeatures.js'
+    ],
+
     collections: [
       'protractor_desktop/collections.js'
+    ],
+
+    communityDashboard: [
+      'protractor_desktop/communityDashboard.js'
     ],
 
     coreEditorAndPlayerFeatures: [
@@ -63,6 +71,10 @@ var suites = {
 
     extensions: [
       'protractor_desktop/extensions.js'
+    ],
+
+    fileUploadFeatures: [
+      'protractor_desktop/voiceoverUploadFeatures.js'
     ],
 
     learnerDashboard: [

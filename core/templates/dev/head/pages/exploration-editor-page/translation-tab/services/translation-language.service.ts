@@ -17,7 +17,7 @@
  * in the translation tab is currently active.
  */
 
-require('domain/utilities/LanguageUtilService.ts');
+require('domain/utilities/language-util.service.ts');
 
 angular.module('oppia').factory('TranslationLanguageService', [
   '$log', '$rootScope', 'LanguageUtilService',
@@ -38,6 +38,9 @@ angular.module('oppia').factory('TranslationLanguageService', [
         $rootScope.$broadcast('activeLanguageChanged');
       },
       getActiveLanguageDescription: function() {
+        if (!activeLanguageCode) {
+          return null;
+        }
         return LanguageUtilService.getAudioLanguageDescription(
           activeLanguageCode);
       }

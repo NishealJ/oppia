@@ -28,13 +28,14 @@ import { AnswerStatsObjectFactory } from
   'domain/exploration/AnswerStatsObjectFactory';
 import { ClassifierObjectFactory } from
   'domain/classifier/ClassifierObjectFactory';
+import { DebugInfoTrackerService } from 'services/debug-info-tracker.service';
 import { ExplorationDraftObjectFactory } from
   'domain/exploration/ExplorationDraftObjectFactory';
 import { ExplorationFeaturesService } from
-  'services/ExplorationFeaturesService';
+  'services/exploration-features.service';
 import { FractionObjectFactory } from 'domain/objects/FractionObjectFactory';
 import { HintObjectFactory } from 'domain/exploration/HintObjectFactory';
-import { ImprovementsService } from 'services/ImprovementsService';
+import { ImprovementsService } from 'services/improvements.service';
 import { OutcomeObjectFactory } from
   'domain/exploration/OutcomeObjectFactory';
 import { ParamChangeObjectFactory } from
@@ -65,6 +66,7 @@ import { WrittenTranslationObjectFactory } from
   'domain/exploration/WrittenTranslationObjectFactory';
 import { WrittenTranslationsObjectFactory } from
   'domain/exploration/WrittenTranslationsObjectFactory';
+import { UpgradedServices } from 'services/UpgradedServices';
 // ^^^ This block is to be removed.
 
 require('App.ts');
@@ -97,6 +99,7 @@ describe('Exploration editor tab controller', function() {
       $provide.value(
         'AnswerStatsObjectFactory', new AnswerStatsObjectFactory());
       $provide.value('ClassifierObjectFactory', new ClassifierObjectFactory());
+      $provide.value('DebugInfoTrackerService', new DebugInfoTrackerService());
       $provide.value(
         'ExplorationDraftObjectFactory', new ExplorationDraftObjectFactory());
       $provide.value(
@@ -138,6 +141,12 @@ describe('Exploration editor tab controller', function() {
         'WrittenTranslationsObjectFactory',
         new WrittenTranslationsObjectFactory(
           new WrittenTranslationObjectFactory()));
+    }));
+    beforeEach(angular.mock.module('oppia', function($provide) {
+      var ugs = new UpgradedServices();
+      for (let [key, value] of Object.entries(ugs.getUpgradedServices())) {
+        $provide.value(key, value);
+      }
     }));
     beforeEach(angular.mock.inject(function(
         _$componentController_, $injector, $rootScope) {
