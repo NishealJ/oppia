@@ -43,7 +43,6 @@ ONE_OFF_JOB_MANAGERS = [
     activity_jobs_one_off.IndexAllActivitiesJobManager,
     collection_jobs_one_off.CollectionMigrationOneOffJob,
     email_jobs_one_off.EmailHashRegenerationOneOffJob,
-    email_jobs_one_off.GeneralFeedbackEmailReplyToIdOneOffJob,
     exp_jobs_one_off.ExpSummariesContributorsOneOffJob,
     exp_jobs_one_off.ExpSummariesCreationOneOffJob,
     exp_jobs_one_off.ExplorationContributorsSummaryOneOffJob,
@@ -56,16 +55,16 @@ ONE_OFF_JOB_MANAGERS = [
     exp_jobs_one_off.ExplorationContentValidationJobForCKEditor,
     exp_jobs_one_off.InteractionCustomizationArgsValidationJob,
     exp_jobs_one_off.TranslatorToVoiceArtistOneOffJob,
-    exp_jobs_one_off.DeleteStateIdMappingModelsOneOffJob,
+    feedback_jobs_one_off.FeedbackThreadCacheOneOffJob,
     opportunity_jobs_one_off.ExplorationOpportunitySummaryModelRegenerationJob,
-    feedback_jobs_one_off.GeneralFeedbackThreadUserOneOffJob,
     question_jobs_one_off.QuestionMigrationOneOffJob,
     recommendations_jobs_one_off.ExplorationRecommendationsOneOffJob,
     skill_jobs_one_off.SkillMigrationOneOffJob,
     stats_jobs_one_off.PlaythroughAudit,
     stats_jobs_one_off.RecomputeStatisticsOneOffJob,
     stats_jobs_one_off.RecomputeStatisticsValidationCopyOneOffJob,
-    stats_jobs_one_off.RegenerateMissingStatsModelsOneOffJob,
+    stats_jobs_one_off.RegenerateMissingV1StatsModelsOneOffJob,
+    stats_jobs_one_off.RegenerateMissingV2StatsModelsOneOffJob,
     stats_jobs_one_off.StatisticsAuditV1,
     stats_jobs_one_off.StatisticsAuditV2,
     stats_jobs_one_off.StatisticsAudit,
@@ -78,7 +77,8 @@ ONE_OFF_JOB_MANAGERS = [
     user_jobs_one_off.UserFirstContributionMsecOneOffJob,
     user_jobs_one_off.UserLastExplorationActivityOneOffJob,
     user_jobs_one_off.UserProfilePictureOneOffJob,
-    user_jobs_one_off.UsernameLengthDistributionOneOffJob
+    user_jobs_one_off.UsernameLengthDistributionOneOffJob,
+    user_jobs_one_off.UserGaeIdOneOffJob
 ]
 
 # List of all manager classes for prod validation one-off batch jobs for which
@@ -174,7 +174,6 @@ AUDIT_JOB_MANAGERS = [
     prod_validation_jobs_one_off.StoryCommitLogEntryModelAuditOneOffJob,
     prod_validation_jobs_one_off.StorySummaryModelAuditOneOffJob,
     prod_validation_jobs_one_off.GeneralSuggestionModelAuditOneOffJob,
-    prod_validation_jobs_one_off.ReviewerRotationTrackingModelAuditOneOffJob,
     prod_validation_jobs_one_off.TopicModelAuditOneOffJob,
     prod_validation_jobs_one_off.TopicSnapshotMetadataModelAuditOneOffJob,
     prod_validation_jobs_one_off.TopicSnapshotContentModelAuditOneOffJob,

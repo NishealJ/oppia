@@ -21,12 +21,12 @@ require(
   'components/common-layout-directives/common-elements/' +
   'background-banner.directive.ts');
 
-require('domain/utilities/UrlInterpolationService.ts');
-require('services/SiteAnalyticsService.ts');
+require('domain/utilities/url-interpolation.service.ts');
+require('services/site-analytics.service.ts');
 
 angular.module('oppia').directive('teachPage', [
-  'UrlInterpolationService', function(
-      UrlInterpolationService) {
+  'UrlInterpolationService', function (
+    UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -37,11 +37,11 @@ angular.module('oppia').directive('teachPage', [
       controller: [
         '$timeout', '$window', 'SiteAnalyticsService',
         'UrlInterpolationService',
-        function(
-            $timeout, $window, SiteAnalyticsService,
-            UrlInterpolationService) {
+        function (
+          $timeout, $window, SiteAnalyticsService,
+          UrlInterpolationService) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             // Define constants
             ctrl.TAB_ID_TEACH = 'teach';
             ctrl.TAB_ID_PLAYBOOK = 'playbook';
@@ -51,7 +51,7 @@ angular.module('oppia').directive('teachPage', [
             var hash = window.location.hash.slice(1);
             var visibleContent = 'oppia-about-visible-content';
 
-            var activateTab = function(tabName) {
+            var activateTab = function (tabName) {
               $("a[id='" + tabName + "']").parent().addClass(
                 activeTabClass
               ).siblings().removeClass(activeTabClass);
@@ -66,7 +66,7 @@ angular.module('oppia').directive('teachPage', [
               activateTab(ctrl.TAB_ID_PLAYBOOK);
             }
 
-            window.onhashchange = function() {
+            window.onhashchange = function () {
               var hashChange = window.location.hash.slice(1);
               if (hashChange === ctrl.TAB_ID_TEACH) {
                 activateTab(ctrl.TAB_ID_TEACH);
@@ -75,17 +75,18 @@ angular.module('oppia').directive('teachPage', [
               }
             };
 
-            ctrl.onTabClick = function(tabName) {
+            ctrl.onTabClick = function (tabName) {
               // Update hash
               window.location.hash = '#' + tabName;
               activateTab(tabName);
             };
+            ctrl.getStaticImageUrl = function (imagePath) {
+              return UrlInterpolationService.getStaticImageUrl(imagePath);
+            };
 
-            ctrl.getStaticImageUrl = UrlInterpolationService.getStaticImageUrl;
-
-            ctrl.onApplyToTeachWithOppia = function() {
+            ctrl.onApplyToTeachWithOppia = function () {
               SiteAnalyticsService.registerApplyToTeachWithOppiaEvent();
-              $timeout(function() {
+              $timeout(function () {
                 $window.location = ctrl.TEACH_FORM_URL;
               }, 150);
               return false;

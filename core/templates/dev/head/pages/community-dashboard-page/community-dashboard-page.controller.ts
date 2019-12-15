@@ -21,47 +21,70 @@ require(
   'components/common-layout-directives/common-elements/' +
   'background-banner.directive.ts');
 require(
+  'components/common-layout-directives/common-elements/' +
+  'lazy-loading.directive.ts');
+require(
+  'pages/community-dashboard-page/contributions-and-review/' +
+  'contributions-and-review.directive.ts');
+require(
+  'pages/community-dashboard-page/question-opportunities/' +
+  'question-opportunities.directive.ts');
+require(
   'pages/community-dashboard-page/translation-opportunities/' +
   'translation-opportunities.directive.ts');
 require(
   'pages/community-dashboard-page/voiceover-opportunities/' +
   'voiceover-opportunities.directive.ts');
 
-require('domain/utilities/LanguageUtilService.ts');
-require('domain/utilities/UrlInterpolationService.ts');
-require('services/LocalStorageService.ts');
+require('domain/utilities/language-util.service.ts');
+require('domain/utilities/url-interpolation.service.ts');
+require('services/local-storage.service.ts');
+require('services/user.service.ts');
 
 require(
   'pages/community-dashboard-page/community-dashboard-page.constants.ajs.ts');
 
 angular.module('oppia').directive('communityDashboardPage', [
-  'UrlInterpolationService', function(
-      UrlInterpolationService) {
+  'UrlInterpolationService', function (
+    UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
       bindToController: {},
       templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
         '/pages/community-dashboard-page/' +
-      'community-dashboard-page.directive.html'),
+        'community-dashboard-page.directive.html'),
       controllerAs: '$ctrl',
       controller: [
         '$window', 'LanguageUtilService', 'LocalStorageService',
-        'TranslationLanguageService', 'COMMUNITY_DASHBOARD_TABS_DETAILS',
+        'TranslationLanguageService', 'UserService',
+        'COMMUNITY_DASHBOARD_TABS_DETAILS',
         'DEFAULT_OPPORTUNITY_LANGUAGE_CODE',
-        function(
-            $window, LanguageUtilService, LocalStorageService,
-            TranslationLanguageService, COMMUNITY_DASHBOARD_TABS_DETAILS,
-            DEFAULT_OPPORTUNITY_LANGUAGE_CODE) {
+        function (
+          $window, LanguageUtilService, LocalStorageService,
+          TranslationLanguageService, UserService,
+          COMMUNITY_DASHBOARD_TABS_DETAILS,
+          DEFAULT_OPPORTUNITY_LANGUAGE_CODE) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
+            ctrl.profilePictureDataUrl = null;
+            ctrl.username = null;
+
+            UserService.getProfileImageDataUrlAsync().then(function (dataUrl) {
+              ctrl.profilePictureDataUrl = dataUrl;
+            });
+
+            UserService.getUserInfoAsync().then(function (userInfo) {
+              ctrl.username = userInfo.getUsername();
+            });
+
             var prevSelectedLanguageCode = (
               LocalStorageService.getLastSelectedTranslationLanguageCode());
             var allAudioLanguageCodes = LanguageUtilService
               .getAllVoiceoverLanguageCodes();
 
             ctrl.languageCodesAndDescriptions = (
-              allAudioLanguageCodes.map(function(languageCode) {
+              allAudioLanguageCodes.map(function (languageCode) {
                 return {
                   id: languageCode,
                   description: (
@@ -71,19 +94,19 @@ angular.module('oppia').directive('communityDashboardPage', [
               }));
             ctrl.languageCode = (
               allAudioLanguageCodes.indexOf(prevSelectedLanguageCode) !== -1 ?
-              prevSelectedLanguageCode : DEFAULT_OPPORTUNITY_LANGUAGE_CODE);
+                prevSelectedLanguageCode : DEFAULT_OPPORTUNITY_LANGUAGE_CODE);
 
             TranslationLanguageService.setActiveLanguageCode(
               ctrl.languageCode);
 
-            ctrl.onChangeLanguage = function() {
+            ctrl.onChangeLanguage = function () {
               TranslationLanguageService.setActiveLanguageCode(
                 ctrl.languageCode);
               LocalStorageService.updateLastSelectedTranslationLanguageCode(
                 ctrl.languageCode);
             };
 
-            ctrl.showLanguageSelector = function() {
+            ctrl.showLanguageSelector = function () {
               var activeTabDetail = ctrl.tabsDetails[ctrl.activeTabName];
               return (
                 activeTabDetail.customizationOptions.indexOf(
@@ -95,7 +118,7 @@ angular.module('oppia').directive('communityDashboardPage', [
             ctrl.OPPIA_AVATAR_IMAGE_URL = (
               UrlInterpolationService.getStaticImageUrl(
                 '/avatar/oppia_avatar_100px.svg'));
-            ctrl.onTabClick = function(activeTabName) {
+            ctrl.onTabClick = function (activeTabName) {
               ctrl.activeTabName = activeTabName;
             };
           };

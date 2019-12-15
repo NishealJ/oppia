@@ -20,15 +20,15 @@
  * followed by the name of the arg.
  */
 
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 require('interactions/GraphInput/directives/graph-detail.service.ts');
-require('services/contextual/DeviceInfoService.ts');
-require('services/stateful/FocusManagerService.ts');
+require('services/contextual/device-info.service.ts');
+require('services/stateful/focus-manager.service.ts');
 
 require('interactions/interactions-extension.constants.ajs.ts');
 
 angular.module('oppia').directive('graphViz', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -52,12 +52,12 @@ angular.module('oppia').directive('graphViz', [
         '$scope', '$element', '$attrs', '$document', '$timeout',
         'FocusManagerService', 'GraphDetailService', 'GRAPH_INPUT_LEFT_MARGIN',
         'EVENT_NEW_CARD_AVAILABLE', 'DeviceInfoService',
-        function(
-            $scope, $element, $attrs, $document, $timeout,
-            FocusManagerService, GraphDetailService, GRAPH_INPUT_LEFT_MARGIN,
-            EVENT_NEW_CARD_AVAILABLE, DeviceInfoService) {
+        function (
+          $scope, $element, $attrs, $document, $timeout,
+          FocusManagerService, GraphDetailService, GRAPH_INPUT_LEFT_MARGIN,
+          EVENT_NEW_CARD_AVAILABLE, DeviceInfoService) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             var _MODES = {
               MOVE: 0,
               ADD_EDGE: 1,
@@ -96,7 +96,7 @@ angular.module('oppia').directive('graphViz', [
             ctrl.selectedEdgeWeightValue = 0;
             ctrl.shouldShowWrongWeightWarning = false;
 
-            $scope.$on(EVENT_NEW_CARD_AVAILABLE, function() {
+            $scope.$on(EVENT_NEW_CARD_AVAILABLE, function () {
               ctrl.state.currentMode = null;
             });
 
@@ -108,7 +108,7 @@ angular.module('oppia').directive('graphViz', [
             var vizContainer = $($element).find('.oppia-graph-viz-svg');
             ctrl.vizWidth = vizContainer.width();
 
-            ctrl.mousemoveGraphSVG = function(event) {
+            ctrl.mousemoveGraphSVG = function (event) {
               if (!ctrl.isInteractionActive()) {
                 return;
               }
@@ -128,7 +128,7 @@ angular.module('oppia').directive('graphViz', [
               // Otherwise, mouse-dragging by label will make the vertex
               // awkwardly jump to the mouse.
               if (ctrl.state.currentlyDraggedVertex !== null &&
-                  (ctrl.state.mouseX > GRAPH_INPUT_LEFT_MARGIN)) {
+                (ctrl.state.mouseX > GRAPH_INPUT_LEFT_MARGIN)) {
                 ctrl.graph.vertices[ctrl.state.currentlyDraggedVertex].x = (
                   ctrl.state.vertexDragStartX + (
                     ctrl.state.mouseX - ctrl.state.mouseDragStartX));
@@ -138,12 +138,12 @@ angular.module('oppia').directive('graphViz', [
               }
             };
 
-            ctrl.onClickGraphSVG = function() {
+            ctrl.onClickGraphSVG = function () {
               if (!ctrl.isInteractionActive()) {
                 return;
               }
               if (ctrl.state.currentMode === _MODES.ADD_VERTEX &&
-                  ctrl.canAddVertex) {
+                ctrl.canAddVertex) {
                 ctrl.graph.vertices.push({
                   x: ctrl.state.mouseX,
                   y: ctrl.state.mouseY,
@@ -158,7 +158,7 @@ angular.module('oppia').directive('graphViz', [
               }
             };
 
-            ctrl.init = function() {
+            ctrl.init = function () {
               initButtons();
               ctrl.state.currentMode = ctrl.buttons[0].mode;
               if (ctrl.isMobile) {
@@ -175,97 +175,35 @@ angular.module('oppia').directive('graphViz', [
                 ctrl.helpText = null;
               }
             };
-
-            var initButtons = function() {
+            var initButtons = function () {
               ctrl.buttons = [];
               if (ctrl.canMoveVertex) {
                 ctrl.buttons.push({
-                  text: '\uE068',
+                  text: '\uF0B2',
                   description: 'I18N_INTERACTIONS_GRAPH_MOVE',
                   mode: _MODES.MOVE
                 });
               }
               if (ctrl.canAddEdge) {
                 ctrl.buttons.push({
-                  text: '\uE144',
+                  text: '\uF0C1',
                   description: 'I18N_INTERACTIONS_GRAPH_ADD_EDGE',
                   mode: _MODES.ADD_EDGE
                 });
               }
               if (ctrl.canAddVertex) {
                 ctrl.buttons.push({
-                  text: '\u002B',
+                  text: '\uF067',
                   description: 'I18N_INTERACTIONS_GRAPH_ADD_NODE',
                   mode: _MODES.ADD_VERTEX
                 });
               }
               if (ctrl.canDeleteVertex || ctrl.canDeleteEdge) {
                 ctrl.buttons.push({
-                  text: '\u2212',
+                  text: '\uF068',
                   description: 'I18N_INTERACTIONS_GRAPH_DELETE',
                   mode: _MODES.DELETE
                 });
-              }
-            };
-
-            var initViewboxSize = function() {
-              var svgContainer = $($element).find('.oppia-graph-viz-svg')[0];
-              var boundingBox = svgContainer.getBBox();
-              var viewBoxHeight = Math.max(
-                boundingBox.height + boundingBox.y,
-                svgContainer.getAttribute('height'));
-              ctrl.svgViewBox = (
-                0 + ' ' + 0 + ' ' + (boundingBox.width + boundingBox.x) +
-                  ' ' + (viewBoxHeight));
-            };
-
-            ctrl.graphOptions = [{
-              text: 'Labeled',
-              option: 'isLabeled'
-            },
-            {
-              text: 'Directed',
-              option: 'isDirected'
-            },
-            {
-              text: 'Weighted',
-              option: 'isWeighted'
-            }];
-            ctrl.toggleGraphOption = function(option) {
-              // Handle the case when we have two edges s -> d and d -> s
-              if (option === 'isDirected' && ctrl.graph[option]) {
-                _deleteRepeatedUndirectedEdges();
-              }
-              ctrl.graph[option] = !ctrl.graph[option];
-            };
-
-            ctrl.helpText = null;
-            var setMode = function(mode) {
-              ctrl.state.currentMode = mode;
-              if (ctrl.isMobile) {
-                if (ctrl.state.currentMode === _MODES.ADD_EDGE) {
-                  ctrl.helpText =
-                    'I18N_INTERACTIONS_GRAPH_EDGE_INITIAL_HELPTEXT';
-                } else if (ctrl.state.currentMode === _MODES.MOVE) {
-                  ctrl.helpText =
-                    'I18N_INTERACTIONS_GRAPH_MOVE_INITIAL_HELPTEXT';
-                } else {
-                  ctrl.helpText = null;
-                }
-              } else {
-                ctrl.helpText = null;
-              }
-              ctrl.state.addEdgeVertex = null;
-              ctrl.state.selectedVertex = null;
-              ctrl.state.selectedEdge = null;
-              ctrl.state.currentlyDraggedVertex = null;
-              ctrl.state.hoveredVertex = null;
-            };
-            ctrl.onClickModeButton = function(mode, $event) {
-              $event.preventDefault();
-              $event.stopPropagation();
-              if (ctrl.isInteractionActive()) {
-                setMode(mode);
               }
             };
 
@@ -274,21 +212,21 @@ angular.module('oppia').directive('graphViz', [
             // (e.g. currentlyDraggedVertex, addEdgeVertex)
 
             // Vertex events
-            ctrl.onClickVertex = function(index) {
+            ctrl.onClickVertex = function (index) {
               if (ctrl.state.currentMode === _MODES.DELETE) {
                 if (ctrl.canDeleteVertex) {
                   deleteVertex(index);
                 }
               }
               if (ctrl.state.currentMode !== _MODES.DELETE &&
-                  ctrl.graph.isLabeled &&
-                  ctrl.canEditVertexLabel) {
+                ctrl.graph.isLabeled &&
+                ctrl.canEditVertexLabel) {
                 beginEditVertexLabel(index);
               }
               if (ctrl.isMobile) {
                 ctrl.state.hoveredVertex = index;
                 if (ctrl.state.addEdgeVertex === null &&
-                    ctrl.state.currentlyDraggedVertex === null) {
+                  ctrl.state.currentlyDraggedVertex === null) {
                   ctrl.onTouchInitialVertex(index);
                 } else {
                   if (ctrl.state.addEdgeVertex === index) {
@@ -303,7 +241,7 @@ angular.module('oppia').directive('graphViz', [
               }
             };
 
-            ctrl.onTouchInitialVertex = function(index) {
+            ctrl.onTouchInitialVertex = function (index) {
               if (ctrl.state.currentMode === _MODES.ADD_EDGE) {
                 if (ctrl.canAddEdge) {
                   beginAddEdge(index);
@@ -317,7 +255,7 @@ angular.module('oppia').directive('graphViz', [
               }
             };
 
-            ctrl.onTouchFinalVertex = function(index) {
+            ctrl.onTouchFinalVertex = function (index) {
               if (ctrl.state.currentMode === _MODES.ADD_EDGE) {
                 tryAddEdge(
                   ctrl.state.addEdgeVertex, index);
@@ -334,7 +272,7 @@ angular.module('oppia').directive('graphViz', [
               }
             };
 
-            ctrl.onMousedownVertex = function(index) {
+            ctrl.onMousedownVertex = function (index) {
               if (ctrl.isMobile) {
                 return;
               }
@@ -349,7 +287,7 @@ angular.module('oppia').directive('graphViz', [
               }
             };
 
-            ctrl.onMouseleaveVertex = function(index) {
+            ctrl.onMouseleaveVertex = function (index) {
               if (ctrl.isMobile) {
                 return;
               }
@@ -358,33 +296,33 @@ angular.module('oppia').directive('graphViz', [
                 null : ctrl.state.hoveredVertex;
             };
 
-            ctrl.onClickVertexLabel = function(index) {
+            ctrl.onClickVertexLabel = function (index) {
               if (ctrl.graph.isLabeled && ctrl.canEditVertexLabel) {
                 beginEditVertexLabel(index);
               }
             };
 
             // Edge events
-            ctrl.onClickEdge = function(index) {
+            ctrl.onClickEdge = function (index) {
               if (ctrl.state.currentMode === _MODES.DELETE) {
                 if (ctrl.canDeleteEdge) {
                   deleteEdge(index);
                 }
               }
               if (ctrl.state.currentMode !== _MODES.DELETE &&
-                  ctrl.graph.isWeighted &&
-                  ctrl.canEditEdgeWeight) {
+                ctrl.graph.isWeighted &&
+                ctrl.canEditEdgeWeight) {
                 beginEditEdgeWeight(index);
               }
             };
-            ctrl.onClickEdgeWeight = function(index) {
+            ctrl.onClickEdgeWeight = function (index) {
               if (ctrl.graph.isWeighted && ctrl.canEditEdgeWeight) {
                 beginEditEdgeWeight(index);
               }
             };
 
             // Document event
-            ctrl.onMouseupDocument = function() {
+            ctrl.onMouseupDocument = function () {
               if (ctrl.isMobile) {
                 return;
               }
@@ -403,15 +341,15 @@ angular.module('oppia').directive('graphViz', [
             $document.on('mouseup', ctrl.onMouseupDocument);
 
             // Actions
-            var beginAddEdge = function(startIndex) {
+            var beginAddEdge = function (startIndex) {
               ctrl.state.addEdgeVertex = startIndex;
             };
 
-            var endAddEdge = function() {
+            var endAddEdge = function () {
               ctrl.state.addEdgeVertex = null;
             };
 
-            var tryAddEdge = function(startIndex, endIndex) {
+            var tryAddEdge = function (startIndex, endIndex) {
               if (
                 startIndex === null ||
                 endIndex === null ||
@@ -424,12 +362,12 @@ angular.module('oppia').directive('graphViz', [
               }
               for (var i = 0; i < ctrl.graph.edges.length; i++) {
                 if (startIndex === ctrl.graph.edges[i].src &&
-                    endIndex === ctrl.graph.edges[i].dst) {
+                  endIndex === ctrl.graph.edges[i].dst) {
                   return;
                 }
                 if (!ctrl.graph.isDirected) {
                   if (startIndex === ctrl.graph.edges[i].dst &&
-                      endIndex === ctrl.graph.edges[i].src) {
+                    endIndex === ctrl.graph.edges[i].src) {
                     return;
                   }
                 }
@@ -442,7 +380,7 @@ angular.module('oppia').directive('graphViz', [
               return;
             };
 
-            var beginDragVertex = function(index) {
+            var beginDragVertex = function (index) {
               ctrl.state.currentlyDraggedVertex = index;
               ctrl.state.vertexDragStartX = ctrl.graph.vertices[index].x;
               ctrl.state.vertexDragStartY = ctrl.graph.vertices[index].y;
@@ -450,7 +388,7 @@ angular.module('oppia').directive('graphViz', [
               ctrl.state.mouseDragStartY = ctrl.state.mouseY;
             };
 
-            var endDragVertex = function() {
+            var endDragVertex = function () {
               ctrl.state.currentlyDraggedVertex = null;
               ctrl.state.vertexDragStartX = 0;
               ctrl.state.vertexDragStartY = 0;
@@ -458,12 +396,12 @@ angular.module('oppia').directive('graphViz', [
               ctrl.state.mouseDragStartY = 0;
             };
 
-            var beginEditVertexLabel = function(index) {
+            var beginEditVertexLabel = function (index) {
               ctrl.state.selectedVertex = index;
               FocusManagerService.setFocus('vertexLabelEditBegun');
             };
 
-            var beginEditEdgeWeight = function(index) {
+            var beginEditEdgeWeight = function (index) {
               ctrl.state.selectedEdge = index;
               ctrl.selectedEdgeWeightValue = (
                 ctrl.graph.edges[ctrl.state.selectedEdge].weight);
@@ -471,18 +409,18 @@ angular.module('oppia').directive('graphViz', [
               FocusManagerService.setFocus('edgeWeightEditBegun');
             };
 
-            var deleteEdge = function(index) {
+            var deleteEdge = function (index) {
               ctrl.graph.edges.splice(index, 1);
               ctrl.state.hoveredEdge = null;
             };
 
-            var _deleteRepeatedUndirectedEdges = function() {
+            var _deleteRepeatedUndirectedEdges = function () {
               for (var i = 0; i < ctrl.graph.edges.length; i++) {
                 var edge1 = ctrl.graph.edges[i];
                 for (var j = i + 1; j < ctrl.graph.edges.length; j++) {
                   var edge2 = ctrl.graph.edges[j];
                   if ((edge1.src === edge2.src && edge1.dst === edge2.dst) ||
-                      (edge1.src === edge2.dst && edge1.dst === edge2.src)) {
+                    (edge1.src === edge2.dst && edge1.dst === edge2.src)) {
                     deleteEdge(j);
                     j--;
                   }
@@ -490,10 +428,10 @@ angular.module('oppia').directive('graphViz', [
               }
             };
 
-            var deleteVertex = function(index) {
+            var deleteVertex = function (index) {
               // Using jQuery's map instead of normal array.map because
               // it removes elements for which the callback returns null
-              ctrl.graph.edges = $.map(ctrl.graph.edges, function(edge) {
+              ctrl.graph.edges = $.map(ctrl.graph.edges, function (edge) {
                 if (edge.src === index || edge.dst === index) {
                   return null;
                 }
@@ -509,7 +447,7 @@ angular.module('oppia').directive('graphViz', [
               ctrl.state.hoveredVertex = null;
             };
 
-            ctrl.selectedVertexLabelGetterSetter = function(label) {
+            ctrl.selectedVertexLabelGetterSetter = function (label) {
               if (ctrl.state.selectedVertex === null) {
                 return '';
               }
@@ -519,7 +457,7 @@ angular.module('oppia').directive('graphViz', [
               return ctrl.graph.vertices[ctrl.state.selectedVertex].label;
             };
 
-            ctrl.selectedEdgeWeight = function(weight) {
+            ctrl.selectedEdgeWeight = function (weight) {
               if (ctrl.state.selectedEdge === null) {
                 return '';
               }
@@ -532,11 +470,11 @@ angular.module('oppia').directive('graphViz', [
               return ctrl.selectedEdgeWeightValue;
             };
 
-            ctrl.isValidEdgeWeight = function() {
+            ctrl.isValidEdgeWeight = function () {
               return angular.isNumber(ctrl.selectedEdgeWeightValue);
             };
 
-            ctrl.onUpdateEdgeWeight = function() {
+            ctrl.onUpdateEdgeWeight = function () {
               if (angular.isNumber(ctrl.selectedEdgeWeightValue)) {
                 ctrl.graph.edges[ctrl.state.selectedEdge].weight = (
                   ctrl.selectedEdgeWeightValue);
@@ -549,13 +487,13 @@ angular.module('oppia').directive('graphViz', [
             var HOVER_COLOR = 'aqua';
             var SELECT_COLOR = 'orange';
             var DEFAULT_COLOR = 'black';
-            ctrl.getEdgeColor = function(index) {
+            ctrl.getEdgeColor = function (index) {
               if (!ctrl.isInteractionActive()) {
                 return DEFAULT_COLOR;
               }
               if (ctrl.state.currentMode === _MODES.DELETE &&
-                  index === ctrl.state.hoveredEdge &&
-                  ctrl.canDeleteEdge) {
+                index === ctrl.state.hoveredEdge &&
+                ctrl.canDeleteEdge) {
                 return DELETE_COLOR;
               } else if (index === ctrl.state.hoveredEdge) {
                 return HOVER_COLOR;
@@ -565,13 +503,13 @@ angular.module('oppia').directive('graphViz', [
                 return DEFAULT_COLOR;
               }
             };
-            ctrl.getVertexColor = function(index) {
+            ctrl.getVertexColor = function (index) {
               if (!ctrl.isInteractionActive()) {
                 return DEFAULT_COLOR;
               }
               if (ctrl.state.currentMode === _MODES.DELETE &&
-                  index === ctrl.state.hoveredVertex &&
-                  ctrl.canDeleteVertex) {
+                index === ctrl.state.hoveredVertex &&
+                ctrl.canDeleteVertex) {
                 return DELETE_COLOR;
               } else if (index === ctrl.state.currentlyDraggedVertex) {
                 return HOVER_COLOR;
@@ -583,11 +521,11 @@ angular.module('oppia').directive('graphViz', [
                 return DEFAULT_COLOR;
               }
             };
-            ctrl.getDirectedEdgeArrowPoints = function(index) {
+            ctrl.getDirectedEdgeArrowPoints = function (index) {
               return GraphDetailService.getDirectedEdgeArrowPoints(
                 ctrl.graph, index);
             };
-            ctrl.getEdgeCentre = function(index) {
+            ctrl.getEdgeCentre = function (index) {
               return GraphDetailService.getEdgeCentre(ctrl.graph, index);
             };
 

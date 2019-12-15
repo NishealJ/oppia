@@ -32,14 +32,14 @@ require('pages/admin-page/roles-tab/admin-roles-tab.directive.ts');
 require('value_generators/valueGeneratorsRequires.ts');
 
 require('domain/objects/NumberWithUnitsObjectFactory.ts');
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 require('pages/admin-page/services/admin-data.service.ts');
 require('pages/admin-page/services/admin-router.service.ts');
-require('services/CsrfTokenService.ts');
-require('services/UtilsService.ts');
+require('services/csrf-token.service.ts');
+require('services/utils.service.ts');
 
 angular.module('oppia').directive('adminPage', ['UrlInterpolationService',
-  function(UrlInterpolationService) {
+  function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -50,30 +50,39 @@ angular.module('oppia').directive('adminPage', ['UrlInterpolationService',
       controller: [
         '$http', '$location', '$scope', 'AdminDataService',
         'AdminRouterService', 'CsrfTokenService', 'DEV_MODE',
-        function($http, $location, $scope, AdminDataService,
-            AdminRouterService, CsrfTokenService, DEV_MODE) {
+        function ($http, $location, $scope, AdminDataService,
+          AdminRouterService, CsrfTokenService, DEV_MODE) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             ctrl.userEmail = '';
-            AdminDataService.getDataAsync().then(function(response) {
+            AdminDataService.getDataAsync().then(function (response) {
               ctrl.userEmail = response.user_email;
             });
             ctrl.inDevMode = DEV_MODE;
-
             ctrl.statusMessage = '';
-            ctrl.isActivitiesTabOpen = AdminRouterService.isActivitiesTabOpen;
-            ctrl.isJobsTabOpen = AdminRouterService.isJobsTabOpen;
-            ctrl.isConfigTabOpen = AdminRouterService.isConfigTabOpen;
-            ctrl.isRolesTabOpen = AdminRouterService.isRolesTabOpen;
-            ctrl.isMiscTabOpen = AdminRouterService.isMiscTabOpen;
+            ctrl.isActivitiesTabOpen = function () {
+              return AdminRouterService.isActivitiesTabOpen();
+            };
+            ctrl.isJobsTabOpen = function () {
+              return AdminRouterService.isJobsTabOpen();
+            };
+            ctrl.isConfigTabOpen = function () {
+              return AdminRouterService.isConfigTabOpen();
+            };
+            ctrl.isRolesTabOpen = function () {
+              return AdminRouterService.isRolesTabOpen();
+            };
+            ctrl.isMiscTabOpen = function () {
+              return AdminRouterService.isMiscTabOpen();
+            };
 
             CsrfTokenService.initializeToken();
 
-            ctrl.setStatusMessage = function(statusMessage) {
+            ctrl.setStatusMessage = function (statusMessage) {
               ctrl.statusMessage = statusMessage;
             };
 
-            $scope.$on('$locationChangeSuccess', function() {
+            $scope.$on('$locationChangeSuccess', function () {
               AdminRouterService.showTab($location.path().replace('/', '#'));
             });
           };

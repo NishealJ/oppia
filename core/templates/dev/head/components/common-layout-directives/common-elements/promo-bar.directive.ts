@@ -18,40 +18,48 @@
  * dismissible.
  */
 
-require('domain/utilities/UrlInterpolationService.ts');
-require('services/PromoBarService.ts');
+require('services/promo-bar.service.ts');
 
 angular.module('oppia').directive('promoBar', [
-  '$window', 'PromoBarService', 'UrlInterpolationService',
-  function($window, PromoBarService, UrlInterpolationService) {
+  '$window', 'PromoBarService',
+  function ($window, PromoBarService) {
     return {
       restrict: 'E',
       scope: {},
       bindToController: {},
-      templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
-        '/components/common-layout-directives/common-elements/' +
-        'promo-bar.directive.html'),
+      template: require('!html-loader!./promo-bar.directive.html'),
       controllerAs: '$ctrl',
       controller: [
-        function() {
+        function () {
           var ctrl = this;
-          this.$onInit = function() {
-            var isPromoDismissed = function() {
-              if (!$window.hasOwnProperty('sessionStorage')) {
+          this.$onInit = function () {
+            var isPromoDismissed = function () {
+              if (!isSessionStorageAvailable()) {
                 return false;
               }
-              return !!angular.fromJson(
-                $window.sessionStorage.promoIsDismissed);
+              return !!angular.fromJson($window.sessionStorage.promoIsDismissed);
             };
-            var setPromoDismissed = function(promoIsDismissed) {
-              if (!$window.hasOwnProperty('sessionStorage')) {
-                return;
+            var setPromoDismissed = function (promoIsDismissed) {
+              if (!isSessionStorageAvailable()) {
+                return false;
               }
               $window.sessionStorage.promoIsDismissed = angular.toJson(
                 promoIsDismissed);
             };
 
-            PromoBarService.getPromoBarData().then(function(promoBarObject) {
+            var isSessionStorageAvailable = function () {
+              // This is to ensure sessionStorage is accessible.
+              var testKey = 'Oppia';
+              try {
+                $window.sessionStorage.setItem(testKey, testKey);
+                $window.sessionStorage.removeItem(testKey);
+                return true;
+              } catch (e) {
+                return false;
+              }
+            };
+
+            PromoBarService.getPromoBarData().then(function (promoBarObject) {
               ctrl.promoBarIsEnabled = promoBarObject.promoBarEnabled;
               ctrl.promoBarMessage = promoBarObject.promoBarMessage;
             });
@@ -61,7 +69,7 @@ angular.module('oppia').directive('promoBar', [
             // promo is dismissed.
             ctrl.promoIsVisible = !isPromoDismissed();
 
-            ctrl.dismissPromo = function() {
+            ctrl.dismissPromo = function () {
               ctrl.promoIsVisible = false;
               setPromoDismissed(true);
             };

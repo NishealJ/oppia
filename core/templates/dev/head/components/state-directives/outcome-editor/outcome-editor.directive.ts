@@ -29,10 +29,10 @@ require(
 require(
   'components/state-editor/state-editor-properties-services/' +
   'state-property.service.ts');
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 
 angular.module('oppia').directive('outcomeEditor', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -54,13 +54,15 @@ angular.module('oppia').directive('outcomeEditor', [
       controller: [
         '$scope', 'StateEditorService', 'StateInteractionIdService',
         'ENABLE_PREREQUISITE_SKILLS', 'INTERACTION_SPECS',
-        function(
-            $scope, StateEditorService, StateInteractionIdService,
-            ENABLE_PREREQUISITE_SKILLS, INTERACTION_SPECS) {
+        function (
+          $scope, StateEditorService, StateInteractionIdService,
+          ENABLE_PREREQUISITE_SKILLS, INTERACTION_SPECS) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             ctrl.editOutcomeForm = {};
-            ctrl.isInQuestionMode = StateEditorService.isInQuestionMode;
+            ctrl.isInQuestionMode = function () {
+              return StateEditorService.isInQuestionMode();
+            };
             ctrl.canAddPrerequisiteSkill = (
               ENABLE_PREREQUISITE_SKILLS &&
               StateEditorService.isExplorationWhitelisted());
@@ -71,34 +73,33 @@ angular.module('oppia').directive('outcomeEditor', [
             // ctrl.savedOutcome now being set in onExternalSave().
             ctrl.savedOutcome = angular.copy(ctrl.outcome);
 
-            ctrl.getCurrentInteractionId = function() {
+            ctrl.getCurrentInteractionId = function () {
               return StateInteractionIdService.savedMemento;
             };
 
-            ctrl.isCorrectnessFeedbackEnabled = function() {
+            ctrl.isCorrectnessFeedbackEnabled = function () {
               return StateEditorService.getCorrectnessFeedbackEnabled();
             };
 
             // This returns false if the current interaction ID is null.
-            ctrl.isCurrentInteractionLinear = function() {
+            ctrl.isCurrentInteractionLinear = function () {
               var interactionId = ctrl.getCurrentInteractionId();
-              return interactionId &&
-              INTERACTION_SPECS[interactionId].is_linear;
+              return interactionId && INTERACTION_SPECS[interactionId].is_linear;
             };
 
-            var onExternalSave = function() {
-              // The reason for this guard is because, when the editor page
-              // for an exploration is first opened, the
-              // 'initializeAnswerGroups' event (which fires an 'externalSave'
-              // event) only fires after the ctrl.savedOutcome is set above.
-              // Until then, ctrl.savedOutcome is undefined.
+            var onExternalSave = function () {
+              // The reason for this guard is because, when the editor page for an
+              // exploration is first opened, the 'initializeAnswerGroups' event
+              // (which fires an 'externalSave' event) only fires after the
+              // ctrl.savedOutcome is set above. Until then, ctrl.savedOutcome
+              // is undefined.
               if (ctrl.savedOutcome === undefined) {
                 ctrl.savedOutcome = angular.copy(ctrl.outcome);
               }
 
               if (ctrl.feedbackEditorIsOpen) {
                 if (ctrl.editOutcomeForm.editFeedbackForm.$valid &&
-                    !ctrl.invalidStateAfterFeedbackSave()) {
+                  !ctrl.invalidStateAfterFeedbackSave()) {
                   ctrl.saveThisFeedback(false);
                 } else {
                   ctrl.cancelThisFeedbackEdit();
@@ -107,115 +108,182 @@ angular.module('oppia').directive('outcomeEditor', [
 
               if (ctrl.destinationEditorIsOpen) {
                 if (ctrl.editOutcomeForm.editDestForm.$valid &&
-                    !ctrl.invalidStateAfterDestinationSave()) {
+                  !ctrl.invalidStateAfterDestinationSave()) {
                   ctrl.saveThisDestination();
                 } else {
                   ctrl.cancelThisDestinationEdit();
                 }
-              }
+                $scope.$on('externalSave', function () {
+                  onExternalSave();
+                });
+
+                $scope.$on('onInteractionIdChanged', function () {
+                  onExternalSave();
+                });
+
+                ctrl.isSelfLoop = function (outcome) {
+                  return (
+                    outcome &&
+                    outcome.dest === StateEditorService.getActiveStateName());
+                };
+
+                ctrl.getCurrentInteractionId = function () {
+                  return StateInteractionIdService.savedMemento;
+                };
+
+                ctrl.isSelfLoopWithNoFeedback = function (outcome) {
+                  if (outcome && typeof outcome === 'object' &&
+                    outcome.constructor.name === 'Outcome') {
+                    return ctrl.isSelfLoop(outcome) &&
+                      !outcome.hasNonemptyFeedback();
+                  }
+                  return false;
+                };
+
+                ctrl.invalidStateAfterFeedbackSave = function () {
+                  var tmpOutcome = angular.copy(ctrl.savedOutcome);
+                  tmpOutcome.feedback = angular.copy(ctrl.outcome.feedback);
+                  return ctrl.isSelfLoopWithNoFeedback(tmpOutcome);
+                };
+                ctrl.invalidStateAfterDestinationSave = function () {
+                  var tmpOutcome = angular.copy(ctrl.savedOutcome);
+                  tmpOutcome.dest = angular.copy(ctrl.outcome.dest);
+                  return ctrl.isSelfLoopWithNoFeedback(tmpOutcome);
+                };
+                ctrl.openFeedbackEditor = function () {
+                  if (ctrl.isEditable()) {
+                    ctrl.feedbackEditorIsOpen = true;
+                  }
+                };
+
+                if (ctrl.destinationEditorIsOpen) {
+                  if (ctrl.editOutcomeForm.editDestForm.$valid &&
+                    !ctrl.invalidStateAfterDestinationSave()) {
+                    ctrl.saveThisDestination();
+                  } else {
+                    ctrl.cancelThisDestinationEdit();
+                  }
+                }
+              };
+              ctrl.saveThisFeedback = function (fromClickSaveFeedbackButton) {
+                $scope.$broadcast('saveOutcomeFeedbackDetails');
+                ctrl.feedbackEditorIsOpen = false;
+                var contentHasChanged = (
+                  ctrl.savedOutcome.feedback.getHtml() !==
+                  ctrl.outcome.feedback.getHtml());
+                ctrl.savedOutcome.feedback = angular.copy(
+                  ctrl.outcome.feedback);
+                // If the stateName has changed and previously saved
+                // destination points to the older name, update it to
+                // the active state name.
+                if (ctrl.savedOutcome.dest === ctrl.outcome.dest) {
+                  ctrl.savedOutcome.dest = StateEditorService.getActiveStateName();
+                }
+                var feedbackContentId = ctrl.savedOutcome.feedback.getContentId();
+                if (fromClickSaveFeedbackButton && contentHasChanged) {
+                  var contentId = ctrl.savedOutcome.feedback.getContentId();
+                  ctrl.showMarkAllAudioAsNeedingUpdateModalIfRequired(contentId);
+                }
+                ctrl.getOnSaveFeedbackFn()(ctrl.savedOutcome);
+              };
+
+              $scope.$on('onInteractionIdChanged', function () {
+                onExternalSave();
+              });
+
+              ctrl.isSelfLoop = function (outcome) {
+                return (
+                  outcome &&
+                  outcome.dest === StateEditorService.getActiveStateName());
+              };
+
+              ctrl.getCurrentInteractionId = function () {
+                return StateInteractionIdService.savedMemento;
+              };
+
+              ctrl.isSelfLoopWithNoFeedback = function (outcome) {
+                if (!outcome) {
+                  return false;
+                }
+                return ctrl.isSelfLoop(outcome) &&
+                  !outcome.hasNonemptyFeedback();
+              };
+
+              ctrl.invalidStateAfterFeedbackSave = function () {
+                var tmpOutcome = angular.copy(ctrl.savedOutcome);
+                tmpOutcome.feedback = angular.copy(ctrl.outcome.feedback);
+                return ctrl.isSelfLoopWithNoFeedback(tmpOutcome);
+              };
+              ctrl.invalidStateAfterDestinationSave = function () {
+                var tmpOutcome = angular.copy(ctrl.savedOutcome);
+                tmpOutcome.dest = angular.copy(ctrl.outcome.dest);
+                return ctrl.isSelfLoopWithNoFeedback(tmpOutcome);
+              };
+              ctrl.openFeedbackEditor = function () {
+                if (ctrl.isEditable()) {
+                  ctrl.feedbackEditorIsOpen = true;
+                }
+              };
+
+              ctrl.openDestinationEditor = function () {
+                if (ctrl.isEditable()) {
+                  ctrl.destinationEditorIsOpen = true;
+                }
+              };
+
+              ctrl.saveThisFeedback = function (fromClickSaveFeedbackButton) {
+                $scope.$broadcast('saveOutcomeFeedbackDetails');
+                ctrl.feedbackEditorIsOpen = false;
+                var contentHasChanged = (
+                  ctrl.savedOutcome.feedback.getHtml() !==
+                  ctrl.outcome.feedback.getHtml());
+                ctrl.savedOutcome.feedback = angular.copy(
+                  ctrl.outcome.feedback);
+                var feedbackContentId = ctrl.savedOutcome.feedback.getContentId();
+                if (fromClickSaveFeedbackButton && contentHasChanged) {
+                  var contentId = ctrl.savedOutcome.feedback.getContentId();
+                  ctrl.showMarkAllAudioAsNeedingUpdateModalIfRequired(contentId);
+                }
+                ctrl.getOnSaveFeedbackFn()(ctrl.savedOutcome);
+              };
+
+              ctrl.saveThisDestination = function () {
+                $scope.$broadcast('saveOutcomeDestDetails');
+                ctrl.destinationEditorIsOpen = false;
+                ctrl.savedOutcome.dest = angular.copy(ctrl.outcome.dest);
+                if (!ctrl.isSelfLoop(ctrl.outcome)) {
+                  ctrl.outcome.refresherExplorationId = null;
+                }
+                ctrl.savedOutcome.refresherExplorationId = (
+                  ctrl.outcome.refresherExplorationId);
+                ctrl.savedOutcome.missingPrerequisiteSkillId =
+                  ctrl.outcome.missingPrerequisiteSkillId;
+
+                ctrl.getOnSaveDestFn()(ctrl.savedOutcome);
+              };
+
+              ctrl.onChangeCorrectnessLabel = function () {
+                ctrl.savedOutcome.labelledAsCorrect = (
+                  ctrl.outcome.labelledAsCorrect);
+
+                ctrl.getOnSaveCorrectnessLabelFn()(ctrl.savedOutcome);
+              };
+
+              ctrl.cancelThisFeedbackEdit = function () {
+                ctrl.outcome.feedback = angular.copy(
+                  ctrl.savedOutcome.feedback);
+                ctrl.feedbackEditorIsOpen = false;
+              };
+
+              ctrl.cancelThisDestinationEdit = function () {
+                ctrl.outcome.dest = angular.copy(ctrl.savedOutcome.dest);
+                ctrl.outcome.refresherExplorationId = (
+                  ctrl.savedOutcome.refresherExplorationId);
+                ctrl.outcome.missingPrerequisiteSkillId =
+                  ctrl.savedOutcome.missingPrerequisiteSkillId;
+                ctrl.destinationEditorIsOpen = false;
+              };
             };
-
-            $scope.$on('externalSave', function() {
-              onExternalSave();
-            });
-
-            $scope.$on('onInteractionIdChanged', function() {
-              onExternalSave();
-            });
-
-            ctrl.isSelfLoop = function(outcome) {
-              return (
-                outcome &&
-                outcome.dest === StateEditorService.getActiveStateName());
-            };
-
-            ctrl.getCurrentInteractionId = function() {
-              return StateInteractionIdService.savedMemento;
-            };
-
-            ctrl.isSelfLoopWithNoFeedback = function(outcome) {
-              if (!outcome) {
-                return false;
-              }
-              return ctrl.isSelfLoop(outcome) &&
-                !outcome.hasNonemptyFeedback();
-            };
-
-            ctrl.invalidStateAfterFeedbackSave = function() {
-              var tmpOutcome = angular.copy(ctrl.savedOutcome);
-              tmpOutcome.feedback = angular.copy(ctrl.outcome.feedback);
-              return ctrl.isSelfLoopWithNoFeedback(tmpOutcome);
-            };
-            ctrl.invalidStateAfterDestinationSave = function() {
-              var tmpOutcome = angular.copy(ctrl.savedOutcome);
-              tmpOutcome.dest = angular.copy(ctrl.outcome.dest);
-              return ctrl.isSelfLoopWithNoFeedback(tmpOutcome);
-            };
-            ctrl.openFeedbackEditor = function() {
-              if (ctrl.isEditable()) {
-                ctrl.feedbackEditorIsOpen = true;
-              }
-            };
-
-            ctrl.openDestinationEditor = function() {
-              if (ctrl.isEditable()) {
-                ctrl.destinationEditorIsOpen = true;
-              }
-            };
-
-            ctrl.saveThisFeedback = function(fromClickSaveFeedbackButton) {
-              $scope.$broadcast('saveOutcomeFeedbackDetails');
-              ctrl.feedbackEditorIsOpen = false;
-              var contentHasChanged = (
-                ctrl.savedOutcome.feedback.getHtml() !==
-                ctrl.outcome.feedback.getHtml());
-              ctrl.savedOutcome.feedback = angular.copy(
-                ctrl.outcome.feedback);
-              var feedbackContentId = ctrl.savedOutcome.feedback.getContentId();
-              if (fromClickSaveFeedbackButton && contentHasChanged) {
-                var contentId = ctrl.savedOutcome.feedback.getContentId();
-                ctrl.showMarkAllAudioAsNeedingUpdateModalIfRequired(contentId);
-              }
-              ctrl.getOnSaveFeedbackFn()(ctrl.savedOutcome);
-            };
-
-            ctrl.saveThisDestination = function() {
-              $scope.$broadcast('saveOutcomeDestDetails');
-              ctrl.destinationEditorIsOpen = false;
-              ctrl.savedOutcome.dest = angular.copy(ctrl.outcome.dest);
-              if (!ctrl.isSelfLoop(ctrl.outcome)) {
-                ctrl.outcome.refresherExplorationId = null;
-              }
-              ctrl.savedOutcome.refresherExplorationId = (
-                ctrl.outcome.refresherExplorationId);
-              ctrl.savedOutcome.missingPrerequisiteSkillId =
-                ctrl.outcome.missingPrerequisiteSkillId;
-
-              ctrl.getOnSaveDestFn()(ctrl.savedOutcome);
-            };
-
-            ctrl.onChangeCorrectnessLabel = function() {
-              ctrl.savedOutcome.labelledAsCorrect = (
-                ctrl.outcome.labelledAsCorrect);
-
-              ctrl.getOnSaveCorrectnessLabelFn()(ctrl.savedOutcome);
-            };
-
-            ctrl.cancelThisFeedbackEdit = function() {
-              ctrl.outcome.feedback = angular.copy(
-                ctrl.savedOutcome.feedback);
-              ctrl.feedbackEditorIsOpen = false;
-            };
-
-            ctrl.cancelThisDestinationEdit = function() {
-              ctrl.outcome.dest = angular.copy(ctrl.savedOutcome.dest);
-              ctrl.outcome.refresherExplorationId = (
-                ctrl.savedOutcome.refresherExplorationId);
-              ctrl.outcome.missingPrerequisiteSkillId =
-                ctrl.savedOutcome.missingPrerequisiteSkillId;
-              ctrl.destinationEditorIsOpen = false;
-            };
-          };
-        }]
+          }]
     };
   }]);

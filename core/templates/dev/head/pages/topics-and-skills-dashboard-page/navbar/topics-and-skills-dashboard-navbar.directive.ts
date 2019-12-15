@@ -18,15 +18,18 @@
 
 require('components/entity-creation-services/skill-creation.service.ts');
 require('components/entity-creation-services/topic-creation.service.ts.ts');
-require('domain/topic/EditableTopicBackendApiService.ts');
-require('domain/utilities/UrlInterpolationService.ts');
+require(
+  'components/review-material-editor/review-material-editor.directive.ts');
+require('domain/skill/RubricObjectFactory.ts');
+require('domain/topic/editable-topic-backend-api.service.ts');
+require('domain/utilities/url-interpolation.service.ts');
 
 require(
   'pages/topics-and-skills-dashboard-page/' +
   'topics-and-skills-dashboard-page.constants.ajs.ts');
 
 angular.module('oppia').directive('topicsAndSkillsDashboardNavbar', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
@@ -39,17 +42,17 @@ angular.module('oppia').directive('topicsAndSkillsDashboardNavbar', [
         'EVENT_TYPE_SKILL_CREATION_ENABLED', 'EditableTopicBackendApiService',
         'EVENT_TOPICS_AND_SKILLS_DASHBOARD_REINITIALIZED',
         'SKILL_DIFFICULTIES',
-        function(
-            $scope, $rootScope, $uibModal, TopicCreationService,
-            RubricObjectFactory, SkillCreationService,
-            EVENT_TYPE_TOPIC_CREATION_ENABLED,
-            EVENT_TYPE_SKILL_CREATION_ENABLED, EditableTopicBackendApiService,
-            EVENT_TOPICS_AND_SKILLS_DASHBOARD_REINITIALIZED,
-            SKILL_DIFFICULTIES) {
-          $scope.createTopic = function() {
+        function (
+          $scope, $rootScope, $uibModal, TopicCreationService,
+          RubricObjectFactory, SkillCreationService,
+          EVENT_TYPE_TOPIC_CREATION_ENABLED,
+          EVENT_TYPE_SKILL_CREATION_ENABLED, EditableTopicBackendApiService,
+          EVENT_TOPICS_AND_SKILLS_DASHBOARD_REINITIALIZED,
+          SKILL_DIFFICULTIES) {
+          $scope.createTopic = function () {
             TopicCreationService.createNewTopic();
           };
-          $scope.createSkill = function() {
+          $scope.createSkill = function () {
             var rubrics = [];
             for (var idx in SKILL_DIFFICULTIES) {
               rubrics.push(
@@ -63,12 +66,21 @@ angular.module('oppia').directive('topicsAndSkillsDashboardNavbar', [
               backdrop: 'static',
               controller: [
                 '$scope', '$uibModalInstance',
-                function($scope, $uibModalInstance) {
+                function ($scope, $uibModalInstance) {
                   $scope.newSkillDescription = '';
                   $scope.rubrics = rubrics;
-                  $scope.allRubricsAdded = false;
+                  $scope.allRubricsAdded = true;
+                  $scope.bindableDict = {
+                    displayedConceptCardExplanation: ''
+                  };
+                  var newExplanationObject = null;
 
-                  var areAllRubricsPresent = function() {
+                  $scope.$watch('newSkillDescription', function () {
+                    $scope.rubrics[1].setExplanation(
+                      '<p>' + $scope.newSkillDescription + '</p>');
+                  });
+
+                  var areAllRubricsPresent = function () {
                     for (var idx in $scope.rubrics) {
                       if ($scope.rubrics[idx].getExplanation() === '') {
                         $scope.allRubricsAdded = false;
@@ -78,8 +90,13 @@ angular.module('oppia').directive('topicsAndSkillsDashboardNavbar', [
                     $scope.allRubricsAdded = true;
                   };
 
+                  $scope.onSaveExplanation = function (explanationObject) {
+                    newExplanationObject = explanationObject.toBackendDict();
+                    $scope.bindableDict.displayedConceptCardExplanation =
+                      explanationObject.getHtml();
+                  };
 
-                  $scope.onSaveRubric = function(difficulty, explanation) {
+                  $scope.onSaveRubric = function (difficulty, explanation) {
                     for (var idx in $scope.rubrics) {
                       if ($scope.rubrics[idx].getDifficulty() === difficulty) {
                         $scope.rubrics[idx].setExplanation(explanation);
@@ -88,33 +105,31 @@ angular.module('oppia').directive('topicsAndSkillsDashboardNavbar', [
                     areAllRubricsPresent();
                   };
 
-                  $scope.createNewSkill = function() {
+                  $scope.createNewSkill = function () {
                     $uibModalInstance.close({
                       description: $scope.newSkillDescription,
-                      rubrics: $scope.rubrics
+                      rubrics: $scope.rubrics,
+                      explanation: newExplanationObject
                     });
                   };
 
-                  $scope.cancel = function() {
+                  $scope.cancel = function () {
                     $uibModalInstance.dismiss('cancel');
                   };
                 }
               ]
-            }).result.then(function(result) {
+            }).result.then(function (result) {
               SkillCreationService.createNewSkill(
-                result.description, result.rubrics, []);
-            }, function() {
-              // This callback is triggered when the Cancel button is clicked.
-              // No further action is needed.
+                result.description, result.rubrics, result.explanation, []);
             });
           };
           $rootScope.$on(
-            EVENT_TYPE_TOPIC_CREATION_ENABLED, function(evt, canCreateTopic) {
+            EVENT_TYPE_TOPIC_CREATION_ENABLED, function (evt, canCreateTopic) {
               $scope.userCanCreateTopic = canCreateTopic;
             }
           );
           $rootScope.$on(
-            EVENT_TYPE_SKILL_CREATION_ENABLED, function(evt, canCreateSkill) {
+            EVENT_TYPE_SKILL_CREATION_ENABLED, function (evt, canCreateSkill) {
               $scope.userCanCreateSkill = canCreateSkill;
             }
           );

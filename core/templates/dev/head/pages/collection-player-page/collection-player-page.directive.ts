@@ -26,28 +26,28 @@ require('components/summary-tile/exploration-summary-tile.directive.ts');
 
 require('domain/collection/CollectionObjectFactory.ts');
 require('domain/collection/CollectionPlaythroughObjectFactory.ts');
-require('domain/collection/GuestCollectionProgressService.ts');
-require('domain/collection/ReadOnlyCollectionBackendApiService.ts');
-require('domain/utilities/UrlInterpolationService.ts');
-require('services/AlertsService.ts');
-require('services/PageTitleService.ts');
-require('services/UserService.ts');
-require('services/contextual/UrlService.ts');
+require('domain/collection/guest-collection-progress.service.ts');
+require('domain/collection/read-only-collection-backend-api.service.ts');
+require('domain/utilities/url-interpolation.service.ts');
+require('services/alerts.service.ts');
+require('services/page-title.service.ts');
+require('services/user.service.ts');
+require('services/contextual/url.service.ts');
 
 angular.module('oppia').animation(
-  '.oppia-collection-animate-slide', function() {
+  '.oppia-collection-animate-slide', function () {
     return {
-      enter: function(element) {
+      enter: function (element) {
         element.hide().slideDown();
       },
-      leave: function(element) {
+      leave: function (element) {
         element.slideUp();
       }
     };
   });
 
 angular.module('oppia').directive('collectionPlayerPage', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -62,24 +62,25 @@ angular.module('oppia').directive('collectionPlayerPage', [
         'PageTitleService', 'ReadOnlyCollectionBackendApiService',
         'UrlInterpolationService', 'UrlService', 'UserService',
         'WHITELISTED_COLLECTION_IDS_FOR_SAVING_GUEST_PROGRESS',
-        function(
-            $anchorScroll, $http, $location, $rootScope, $scope,
-            AlertsService, CollectionObjectFactory,
-            CollectionPlaythroughObjectFactory, GuestCollectionProgressService,
-            PageTitleService, ReadOnlyCollectionBackendApiService,
-            UrlInterpolationService, UrlService, UserService,
-            WHITELISTED_COLLECTION_IDS_FOR_SAVING_GUEST_PROGRESS) {
+        function (
+          $anchorScroll, $http, $location, $rootScope, $scope,
+          AlertsService, CollectionObjectFactory,
+          CollectionPlaythroughObjectFactory, GuestCollectionProgressService,
+          PageTitleService, ReadOnlyCollectionBackendApiService,
+          UrlInterpolationService, UrlService, UserService,
+          WHITELISTED_COLLECTION_IDS_FOR_SAVING_GUEST_PROGRESS) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             $rootScope.loadingMessage = 'Loading';
             ctrl.collection = null;
             ctrl.collectionPlaythrough = null;
             ctrl.collectionId = UrlService.getCollectionIdFromUrl();
             ctrl.explorationCardIsShown = false;
-            ctrl.getStaticImageUrl = UrlInterpolationService.getStaticImageUrl;
+            ctrl.getStaticImageUrl = function (imagePath) {
+              return UrlInterpolationService.getStaticImageUrl(imagePath);
+            };
             // The pathIconParameters is an array containing the co-ordinates,
-            // background color and icon url for the icons generated on the
-            // path.
+            // background color and icon url for the icons generated on the path.
             ctrl.pathIconParameters = [];
             ctrl.activeHighlightedIconIndex = -1;
             ctrl.MIN_HEIGHT_FOR_PATH_SVG_PX = 220;
@@ -97,7 +98,7 @@ angular.module('oppia').directive('collectionPlayerPage', [
             $anchorScroll.yOffset = -80;
 
             $http.get('/collection_handler/data/' + ctrl.collectionId).then(
-              function(response) {
+              function (response) {
                 response = response.data;
                 angular.element('meta[itemprop="name"]').attr(
                   'content', response.meta_name);
@@ -109,19 +110,19 @@ angular.module('oppia').directive('collectionPlayerPage', [
                   'content', response.meta_description);
               }
             );
-            ctrl.setIconHighlight = function(index) {
+            ctrl.setIconHighlight = function (index) {
               ctrl.activeHighlightedIconIndex = index;
             };
 
-            ctrl.unsetIconHighlight = function() {
+            ctrl.unsetIconHighlight = function () {
               ctrl.activeHighlightedIconIndex = -1;
             };
 
-            ctrl.togglePreviewCard = function() {
+            ctrl.togglePreviewCard = function () {
               ctrl.explorationCardIsShown = !ctrl.explorationCardIsShown;
             };
 
-            ctrl.getCollectionNodeForExplorationId = function(explorationId) {
+            ctrl.getCollectionNodeForExplorationId = function (explorationId) {
               var collectionNode = (
                 ctrl.collection.getCollectionNodeByExplorationId(
                   explorationId));
@@ -132,26 +133,26 @@ angular.module('oppia').directive('collectionPlayerPage', [
               return collectionNode;
             };
 
-            ctrl.getNextRecommendedCollectionNodes = function() {
+            ctrl.getNextRecommendedCollectionNodes = function () {
               return ctrl.getCollectionNodeForExplorationId(
                 ctrl.collectionPlaythrough.getNextExplorationId());
             };
 
-            ctrl.getCompletedExplorationNodes = function() {
+            ctrl.getCompletedExplorationNodes = function () {
               return ctrl.getCollectionNodeForExplorationId(
                 ctrl.collectionPlaythrough.getCompletedExplorationIds());
             };
 
-            ctrl.getNonRecommendedCollectionNodeCount = function() {
+            ctrl.getNonRecommendedCollectionNodeCount = function () {
               return ctrl.collection.getCollectionNodeCount() - (
                 ctrl.collectionPlaythrough
                   .getNextRecommendedCollectionNodeCount(
                   ) + ctrl.collectionPlaythrough
-                  .getCompletedExplorationNodeCount(
-                  ));
+                    .getCompletedExplorationNodeCount(
+                    ));
             };
 
-            ctrl.updateExplorationPreview = function(explorationId) {
+            ctrl.updateExplorationPreview = function (explorationId) {
               ctrl.explorationCardIsShown = true;
               ctrl.currentExplorationId = explorationId;
               ctrl.summaryToPreview = ctrl.getCollectionNodeForExplorationId(
@@ -159,13 +160,13 @@ angular.module('oppia').directive('collectionPlayerPage', [
             };
 
             // Calculates the SVG parameters required to draw the curved path.
-            ctrl.generatePathParameters = function() {
+            ctrl.generatePathParameters = function () {
               // The pathSvgParameters represents the final string of SVG
               // parameters for the bezier curve to be generated. The default
               // parameters represent the first curve ie. lesson 1 to lesson 3.
               ctrl.pathSvgParameters = 'M250 80  C 470 100, 470 280, 250 300';
               var collectionNodeCount =
-              ctrl.collection.getCollectionNodeCount();
+                ctrl.collection.getCollectionNodeCount();
               // The sParameterExtension represents the co-ordinates following
               // the 'S' (smooth curve to) command in SVG.
               var sParameterExtension = '';
@@ -204,7 +205,7 @@ angular.module('oppia').directive('collectionPlayerPage', [
               }
             };
 
-            ctrl.generatePathIconParameters = function() {
+            ctrl.generatePathIconParameters = function () {
               var collectionNodes = ctrl.collection.getCollectionNodes();
               var iconParametersArray = [];
               iconParametersArray.push({
@@ -231,7 +232,7 @@ angular.module('oppia').directive('collectionPlayerPage', [
                   y += ctrl.ICON_Y_INCREMENT_PX;
                   countMiddleIcon = 1;
                 } else if (countMiddleIcon === 1 &&
-                    x === ctrl.ICON_X_MIDDLE_PX) {
+                  x === ctrl.ICON_X_MIDDLE_PX) {
                   x = ctrl.ICON_X_RIGHT_PX;
                   y += ctrl.ICON_Y_INCREMENT_PX;
                   countMiddleIcon = 0;
@@ -254,14 +255,14 @@ angular.module('oppia').directive('collectionPlayerPage', [
               return iconParametersArray;
             };
 
-            ctrl.getExplorationUrl = function(explorationId) {
+            ctrl.getExplorationUrl = function (explorationId) {
               return (
                 '/explore/' + explorationId + '?collection_id=' +
                 ctrl.collectionId);
             };
 
-            ctrl.getExplorationTitlePosition = function(index) {
-              if (index % 2 === 0 ) {
+            ctrl.getExplorationTitlePosition = function (index) {
+              if (index % 2 === 0) {
                 return '8px';
               } else if ((index + 1) % 2 === 0 && (index + 1) % 4 !== 0) {
                 return '30px';
@@ -275,10 +276,10 @@ angular.module('oppia').directive('collectionPlayerPage', [
                 stringified_collection_ids: JSON.stringify([ctrl.collectionId])
               }
             }).then(
-              function(response) {
+              function (response) {
                 ctrl.collectionSummary = response.data.summaries[0];
               },
-              function() {
+              function () {
                 AlertsService.addWarning(
                   'There was an error while fetching the collection summary.');
               }
@@ -287,83 +288,83 @@ angular.module('oppia').directive('collectionPlayerPage', [
             // Load the collection the learner wants to view.
             ReadOnlyCollectionBackendApiService.loadCollection(
               ctrl.collectionId).then(
-              function(collectionBackendObject) {
-                ctrl.collection = CollectionObjectFactory.create(
-                  collectionBackendObject);
-                $rootScope.$broadcast('collectionLoaded');
+                function (collectionBackendObject) {
+                  ctrl.collection = CollectionObjectFactory.create(
+                    collectionBackendObject);
+                  $rootScope.$broadcast('collectionLoaded');
 
-                PageTitleService.setPageTitle(
-                  ctrl.collection.getTitle() + ' - Oppia');
+                  PageTitleService.setPageTitle(
+                    ctrl.collection.getTitle() + ' - Oppia');
 
-                // Load the user's current progress in the collection. If the
-                // user is a guest, then either the defaults from the server
-                // will be used or the user's local progress, if any has been
-                // made and the collection is whitelisted.
-                var collectionAllowsGuestProgress = (
-                  ctrl.whitelistedCollectionIdsForGuestProgress.indexOf(
-                    ctrl.collectionId) !== -1);
-                UserService.getUserInfoAsync().then(function(userInfo) {
-                  $rootScope.loadingMessage = '';
-                  ctrl.isLoggedIn = userInfo.isLoggedIn();
-                  if (!ctrl.isLoggedIn && collectionAllowsGuestProgress &&
+                  // Load the user's current progress in the collection. If the
+                  // user is a guest, then either the defaults from the server
+                  // will be used or the user's local progress, if any has been
+                  // made and the collection is whitelisted.
+                  var collectionAllowsGuestProgress = (
+                    ctrl.whitelistedCollectionIdsForGuestProgress.indexOf(
+                      ctrl.collectionId) !== -1);
+                  UserService.getUserInfoAsync().then(function (userInfo) {
+                    $rootScope.loadingMessage = '';
+                    ctrl.isLoggedIn = userInfo.isLoggedIn();
+                    if (!ctrl.isLoggedIn && collectionAllowsGuestProgress &&
                       GuestCollectionProgressService
                         .hasCompletedSomeExploration(ctrl.collectionId)) {
-                    var completedExplorationIds = (
-                      GuestCollectionProgressService.getCompletedExplorationIds(
-                        ctrl.collection));
-                    var nextExplorationId = (
-                      GuestCollectionProgressService.getNextExplorationId(
-                        ctrl.collection, completedExplorationIds));
-                    ctrl.collectionPlaythrough = (
-                      CollectionPlaythroughObjectFactory.create(
-                        nextExplorationId, completedExplorationIds));
-                  } else {
-                    ctrl.collectionPlaythrough = (
-                      CollectionPlaythroughObjectFactory
-                        .createFromBackendObject(
-                          collectionBackendObject.playthrough_dict));
-                  }
-                  ctrl.nextExplorationId =
-                    ctrl.collectionPlaythrough.getNextExplorationId();
+                      var completedExplorationIds = (
+                        GuestCollectionProgressService.getCompletedExplorationIds(
+                          ctrl.collection));
+                      var nextExplorationId = (
+                        GuestCollectionProgressService.getNextExplorationId(
+                          ctrl.collection, completedExplorationIds));
+                      ctrl.collectionPlaythrough = (
+                        CollectionPlaythroughObjectFactory.create(
+                          nextExplorationId, completedExplorationIds));
+                    } else {
+                      ctrl.collectionPlaythrough = (
+                        CollectionPlaythroughObjectFactory
+                          .createFromBackendObject(
+                            collectionBackendObject.playthrough_dict));
+                    }
+                    ctrl.nextExplorationId =
+                      ctrl.collectionPlaythrough.getNextExplorationId();
 
-                  ctrl.isCompletedExploration = function(explorationId) {
-                    var completedExplorationIds = (
-                      ctrl.collectionPlaythrough.getCompletedExplorationIds());
-                    return completedExplorationIds.indexOf(explorationId) > -1;
-                  };
-                });
-              },
-              function() {
-                // TODO(bhenning): Handle not being able to load the collection.
-                // NOTE TO DEVELOPERS: Check the backend console for an
-                // indication as to why this error occurred; sometimes the
-                // errors are noisy, so they are not shown to the user.
-                AlertsService.addWarning(
-                  'There was an error loading the collection.');
-              }
-            );
+                    ctrl.isCompletedExploration = function (explorationId) {
+                      var completedExplorationIds = (
+                        ctrl.collectionPlaythrough.getCompletedExplorationIds());
+                      return completedExplorationIds.indexOf(explorationId) > -1;
+                    };
+                  });
+                },
+                function () {
+                  // TODO(bhenning): Handle not being able to load the collection.
+                  // NOTE TO DEVELOPERS: Check the backend console for an
+                  // indication as to why this error occurred; sometimes the
+                  // errors are noisy, so they are not shown to the user.
+                  AlertsService.addWarning(
+                    'There was an error loading the collection.');
+                }
+              );
 
-            $scope.$watch('$ctrl.collection', function(newValue) {
+            $scope.$watch('$ctrl.collection', function (newValue) {
               if (newValue !== null) {
                 ctrl.generatePathParameters();
               }
             }, true);
 
-            ctrl.scrollToLocation = function(id) {
+            ctrl.scrollToLocation = function (id) {
               $location.hash(id);
               $anchorScroll();
             };
 
-            ctrl.closeOnClickingOutside = function() {
+            ctrl.closeOnClickingOutside = function () {
               ctrl.explorationCardIsShown = false;
             };
 
-            ctrl.onClickStopPropagation = function($evt) {
+            ctrl.onClickStopPropagation = function ($evt) {
               $evt.stopPropagation();
             };
 
             // Touching anywhere outside the mobile preview should hide it.
-            document.addEventListener('touchstart', function() {
+            document.addEventListener('touchstart', function () {
               if (ctrl.explorationCardIsShown === true) {
                 ctrl.explorationCardIsShown = false;
               }

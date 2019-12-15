@@ -20,15 +20,15 @@ require(
   'components/forms/schema-based-editors/schema-based-editor.directive.ts');
 require('pages/story-editor-page/editor-tab/story-node-editor.directive.ts');
 
-require('domain/editor/undo_redo/UndoRedoService.ts');
-require('domain/story/StoryUpdateService.ts');
+require('domain/editor/undo_redo/undo-redo.service.ts');
+require('domain/story/story-update.service.ts');
 require('pages/story-editor-page/services/story-editor-state.service.ts');
-require('services/AlertsService.ts');
+require('services/alerts.service.ts');
 
 require('pages/story-editor-page/story-editor-page.constants.ajs.ts');
 
 angular.module('oppia').directive('storyEditor', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -38,11 +38,11 @@ angular.module('oppia').directive('storyEditor', [
         '$scope', 'StoryEditorStateService', 'StoryUpdateService',
         'UndoRedoService', 'EVENT_VIEW_STORY_NODE_EDITOR', '$uibModal',
         'EVENT_STORY_INITIALIZED', 'EVENT_STORY_REINITIALIZED', 'AlertsService',
-        function(
-            $scope, StoryEditorStateService, StoryUpdateService,
-            UndoRedoService, EVENT_VIEW_STORY_NODE_EDITOR, $uibModal,
-            EVENT_STORY_INITIALIZED, EVENT_STORY_REINITIALIZED, AlertsService) {
-          var _init = function() {
+        function (
+          $scope, StoryEditorStateService, StoryUpdateService,
+          UndoRedoService, EVENT_VIEW_STORY_NODE_EDITOR, $uibModal,
+          EVENT_STORY_INITIALIZED, EVENT_STORY_REINITIALIZED, AlertsService) {
+          var _init = function () {
             $scope.story = StoryEditorStateService.getStory();
             $scope.storyContents = $scope.story.getStoryContents();
             if ($scope.storyContents) {
@@ -51,14 +51,20 @@ angular.module('oppia').directive('storyEditor', [
             _initEditor();
           };
 
-          var _initEditor = function() {
+          var _initEditor = function () {
             $scope.story = StoryEditorStateService.getStory();
             $scope.storyContents = $scope.story.getStoryContents();
-            $scope.disconnectedNodeIds = [];
-            if ($scope.storyContents) {
+            $scope.disconnectedNodes = [];
+            $scope.linearNodesList = [];
+            $scope.nodes = [];
+            if ($scope.storyContents &&
+              $scope.storyContents.getNodes().length > 0) {
               $scope.nodes = $scope.storyContents.getNodes();
-              $scope.disconnectedNodeIds =
-                $scope.storyContents.getDisconnectedNodeIds();
+              $scope.initialNodeId = $scope.storyContents.getInitialNodeId();
+              $scope.linearNodesList =
+                $scope.storyContents.getLinearNodesList();
+              $scope.disconnectedNodes =
+                $scope.storyContents.getDisconnectedNodes();
             }
             $scope.notesEditorIsShown = false;
             $scope.storyTitleEditorIsShown = false;
@@ -70,32 +76,40 @@ angular.module('oppia').directive('storyEditor', [
             $scope.storyDescriptionChanged = false;
           };
 
-          $scope.setNodeToEdit = function(nodeId) {
+          $scope.setNodeToEdit = function (nodeId) {
             $scope.idOfNodeToEdit = nodeId;
           };
 
-          $scope.openNotesEditor = function() {
+          $scope.openNotesEditor = function () {
             $scope.notesEditorIsShown = true;
           };
 
-          $scope.closeNotesEditor = function() {
+          $scope.closeNotesEditor = function () {
             $scope.notesEditorIsShown = false;
           };
 
-          $scope.isInitialNode = function(nodeId) {
+          $scope.isInitialNode = function (nodeId) {
             return (
               $scope.story.getStoryContents().getInitialNodeId() === nodeId);
           };
 
-          $scope.markAsInitialNode = function(nodeId) {
+          $scope.markAsInitialNode = function (nodeId) {
             if ($scope.isInitialNode(nodeId)) {
               return;
             }
             StoryUpdateService.setInitialNodeId($scope.story, nodeId);
+            var nodes = this.storyContents.getNodes();
+            for (var i = 0; i < nodes.length; i++) {
+              if (nodes[i].getDestinationNodeIds().indexOf(nodeId) !== -1) {
+                StoryUpdateService.removeDestinationNodeIdFromNode(
+                  $scope.story, nodes[i].getId(), nodeId);
+              }
+            }
             _initEditor();
+            $scope.$broadcast('recalculateAvailableNodes');
           };
 
-          $scope.deleteNode = function(nodeId) {
+          $scope.deleteNode = function (nodeId) {
             if ($scope.isInitialNode(nodeId)) {
               AlertsService.addInfoMessage(
                 'Cannot delete the first chapter of a story.', 3000);
@@ -108,27 +122,26 @@ angular.module('oppia').directive('storyEditor', [
               backdrop: true,
               controller: [
                 '$scope', '$uibModalInstance',
-                function($scope, $uibModalInstance) {
-                  $scope.confirmDeletion = function() {
+                function ($scope, $uibModalInstance) {
+                  $scope.confirmDeletion = function () {
                     $uibModalInstance.close();
                   };
-                  $scope.cancel = function() {
+                  $scope.cancel = function () {
                     $uibModalInstance.dismiss('cancel');
                   };
                 }
               ]
             });
 
-            modalInstance.result.then(function(title) {
+            modalInstance.result.then(function (title) {
               StoryUpdateService.deleteStoryNode($scope.story, nodeId);
-            }, function() {
-              // This callback is triggered when the Cancel button is clicked.
-              // No further action is needed.
+              _initEditor();
+              $scope.$broadcast('recalculateAvailableNodes');
             });
           };
 
-          $scope.createNode = function() {
-            var nodeTitles = $scope.nodes.map(function(node) {
+          $scope.createNode = function () {
+            var nodeTitles = $scope.linearNodesList.map(function (node) {
               return node.getTitle();
             });
             var modalInstance = $uibModal.open({
@@ -138,18 +151,18 @@ angular.module('oppia').directive('storyEditor', [
               backdrop: true,
               controller: [
                 '$scope', '$uibModalInstance',
-                function($scope, $uibModalInstance) {
+                function ($scope, $uibModalInstance) {
                   $scope.nodeTitle = '';
                   $scope.nodeTitles = nodeTitles;
                   $scope.errorMsg = null;
 
-                  $scope.resetErrorMsg = function() {
+                  $scope.resetErrorMsg = function () {
                     $scope.errorMsg = null;
                   };
-                  $scope.isNodeTitleEmpty = function(nodeTitle) {
+                  $scope.isNodeTitleEmpty = function (nodeTitle) {
                     return (nodeTitle === '');
                   };
-                  $scope.save = function(title) {
+                  $scope.save = function (title) {
                     if ($scope.nodeTitles.indexOf(title) !== -1) {
                       $scope.errorMsg =
                         'A chapter with this title already exists';
@@ -157,14 +170,14 @@ angular.module('oppia').directive('storyEditor', [
                     }
                     $uibModalInstance.close(title);
                   };
-                  $scope.cancel = function() {
+                  $scope.cancel = function () {
                     $uibModalInstance.dismiss('cancel');
                   };
                 }
               ]
             });
 
-            modalInstance.result.then(function(title) {
+            modalInstance.result.then(function (title) {
               StoryUpdateService.addStoryNode($scope.story, title);
               _initEditor();
               // If the first node is added, open it just after creation.
@@ -172,8 +185,7 @@ angular.module('oppia').directive('storyEditor', [
                 $scope.setNodeToEdit(
                   $scope.story.getStoryContents().getInitialNodeId());
               }
-            }, function() {
-
+              $scope.$broadcast('recalculateAvailableNodes');
             });
           };
 
@@ -184,7 +196,7 @@ angular.module('oppia').directive('storyEditor', [
             }
           };
 
-          $scope.updateNotes = function(newNotes) {
+          $scope.updateNotes = function (newNotes) {
             if (newNotes === $scope.story.getNotes()) {
               return;
             }
@@ -192,30 +204,30 @@ angular.module('oppia').directive('storyEditor', [
             _initEditor();
           };
 
-          $scope.updateStoryDescriptionStatus = function(description) {
+          $scope.updateStoryDescriptionStatus = function (description) {
             $scope.editableDescriptionIsEmpty = (description === '');
             $scope.storyDescriptionChanged = true;
           };
 
-          $scope.updateStoryTitle = function(newTitle) {
+          $scope.updateStoryTitle = function (newTitle) {
             if (newTitle === $scope.story.getTitle()) {
               return;
             }
             StoryUpdateService.setStoryTitle($scope.story, newTitle);
           };
 
-          $scope.updateStoryDescription = function(newDescription) {
+          $scope.updateStoryDescription = function (newDescription) {
             if (newDescription !== $scope.story.getDescription()) {
               StoryUpdateService.setStoryDescription(
                 $scope.story, newDescription);
             }
           };
 
-          $scope.$on(EVENT_VIEW_STORY_NODE_EDITOR, function(evt, nodeId) {
+          $scope.$on(EVENT_VIEW_STORY_NODE_EDITOR, function (evt, nodeId) {
             $scope.setNodeToEdit(nodeId);
           });
 
-          $scope.$on('storyGraphUpdated', function(evt, storyContents) {
+          $scope.$on('storyGraphUpdated', function (evt, storyContents) {
             _initEditor();
           });
 

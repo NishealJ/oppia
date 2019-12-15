@@ -16,18 +16,18 @@
  * @fileoverview Directive for the navigation bar in the admin panel.
  */
 
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 require('pages/admin-page/services/admin-router.service.ts');
-require('services/UserService.ts');
+require('services/user.service.ts');
 
 require('pages/admin-page/admin-page.constants.ajs.ts');
 
 angular.module('oppia').directive('adminNavbar', [
   'AdminRouterService', 'UrlInterpolationService', 'ADMIN_TAB_URLS',
   'LOGOUT_URL', 'PROFILE_URL_TEMPLATE',
-  function(
-      AdminRouterService, UrlInterpolationService, ADMIN_TAB_URLS,
-      LOGOUT_URL, PROFILE_URL_TEMPLATE) {
+  function (
+    AdminRouterService, UrlInterpolationService, ADMIN_TAB_URLS,
+    LOGOUT_URL, PROFILE_URL_TEMPLATE) {
     return {
       restrict: 'E',
       scope: {},
@@ -37,18 +37,30 @@ angular.module('oppia').directive('adminNavbar', [
       templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
         '/pages/admin-page/navbar/admin-navbar.directive.html'),
       controllerAs: '$ctrl',
-      controller: ['UserService', function(UserService) {
+      controller: ['UserService', function (UserService) {
         var ctrl = this;
-        this.$onInit = function() {
+        this.$onInit = function () {
           ctrl.ADMIN_TAB_URLS = ADMIN_TAB_URLS;
-          ctrl.showTab = AdminRouterService.showTab;
-          ctrl.isActivitiesTabOpen = AdminRouterService.isActivitiesTabOpen;
-          ctrl.isJobsTabOpen = AdminRouterService.isJobsTabOpen;
-          ctrl.isConfigTabOpen = AdminRouterService.isConfigTabOpen;
-          ctrl.isRolesTabOpen = AdminRouterService.isRolesTabOpen;
-          ctrl.isMiscTabOpen = AdminRouterService.isMiscTabOpen;
+          ctrl.showTab = function () {
+            return AdminRouterService.showTab();
+          };
+          ctrl.isActivitiesTabOpen = function () {
+            return AdminRouterService.isActivitiesTabOpen();
+          };
+          ctrl.isJobsTabOpen = function () {
+            return AdminRouterService.isJobsTabOpen();
+          };
+          ctrl.isConfigTabOpen = function () {
+            return AdminRouterService.isConfigTabOpen();
+          };
+          ctrl.isRolesTabOpen = function () {
+            return AdminRouterService.isRolesTabOpen();
+          };
+          ctrl.isMiscTabOpen = function () {
+            return AdminRouterService.isMiscTabOpen();
+          };
 
-          UserService.getProfileImageDataUrlAsync().then(function(dataUrl) {
+          UserService.getProfileImageDataUrlAsync().then(function (dataUrl) {
             ctrl.profilePictureDataUrl = dataUrl;
           });
 
@@ -56,7 +68,7 @@ angular.module('oppia').directive('adminNavbar', [
           ctrl.isModerator = null;
           ctrl.isSuperAdmin = null;
           ctrl.profileUrl = '';
-          UserService.getUserInfoAsync().then(function(userInfo) {
+          UserService.getUserInfoAsync().then(function (userInfo) {
             ctrl.username = userInfo.getUsername();
             ctrl.isModerator = userInfo.isModerator();
             ctrl.isSuperAdmin = userInfo.isSuperAdmin();
@@ -74,12 +86,12 @@ angular.module('oppia').directive('adminNavbar', [
           ctrl.logoutUrl = LOGOUT_URL;
 
           ctrl.profileDropdownIsActive = false;
-          ctrl.onMouseoverProfilePictureOrDropdown = function(evt) {
+          ctrl.onMouseoverProfilePictureOrDropdown = function (evt) {
             angular.element(evt.currentTarget).parent().addClass('open');
             ctrl.profileDropdownIsActive = true;
           };
 
-          ctrl.onMouseoutProfilePictureOrDropdown = function(evt) {
+          ctrl.onMouseoutProfilePictureOrDropdown = function (evt) {
             angular.element(evt.currentTarget).parent().removeClass('open');
             ctrl.profileDropdownIsActive = false;
           };

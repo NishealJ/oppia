@@ -18,13 +18,13 @@
 
 require('base-components/base-content.directive.ts');
 
-require('domain/utilities/UrlInterpolationService.ts');
-require('services/SiteAnalyticsService.ts');
-require('services/contextual/UrlService.ts');
-require('services/contextual/WindowDimensionsService.ts');
+require('domain/utilities/url-interpolation.service.ts');
+require('services/site-analytics.service.ts');
+require('services/contextual/url.service.ts');
+require('services/contextual/window-dimensions.service.ts');
 
 angular.module('oppia').directive('stewardsLandingPage', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -36,11 +36,11 @@ angular.module('oppia').directive('stewardsLandingPage', [
       controller: [
         '$scope', '$timeout', '$window', 'SiteAnalyticsService',
         'UrlInterpolationService', 'UrlService', 'WindowDimensionsService',
-        function(
-            $scope, $timeout, $window, SiteAnalyticsService,
-            UrlInterpolationService, UrlService, WindowDimensionsService) {
+        function (
+          $scope, $timeout, $window, SiteAnalyticsService,
+          UrlInterpolationService, UrlService, WindowDimensionsService) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             ctrl.TAB_NAME_PARENTS = 'Parents';
             ctrl.TAB_NAME_TEACHERS = 'Teachers';
             ctrl.TAB_NAME_NONPROFITS = 'NGOs';
@@ -54,16 +54,16 @@ angular.module('oppia').directive('stewardsLandingPage', [
               '/volunteers': ctrl.TAB_NAME_VOLUNTEERS
             };
 
-            ctrl.setActiveTabName = function(newActiveTabName) {
+            ctrl.setActiveTabName = function (newActiveTabName) {
               ctrl.activeTabName = newActiveTabName;
               ctrl.buttonDefinitions = getButtonDefinitions(newActiveTabName);
             };
 
-            ctrl.isActiveTab = function(tabName) {
+            ctrl.isActiveTab = function (tabName) {
               return ctrl.activeTabName === tabName;
             };
 
-            ctrl.getActiveTabNameInSingularForm = function() {
+            ctrl.getActiveTabNameInSingularForm = function () {
               if (ctrl.activeTabName === ctrl.TAB_NAME_PARENTS) {
                 return 'Parent';
               } else if (ctrl.activeTabName === ctrl.TAB_NAME_TEACHERS) {
@@ -77,9 +77,9 @@ angular.module('oppia').directive('stewardsLandingPage', [
               }
             };
 
-            var getButtonDefinitions = function(tabName) {
+            var getButtonDefinitions = function (tabName) {
               if (tabName === ctrl.TAB_NAME_PARENTS ||
-                  tabName === ctrl.TAB_NAME_TEACHERS) {
+                tabName === ctrl.TAB_NAME_TEACHERS) {
                 return [{
                   text: 'Browse Lessons',
                   href: '/library'
@@ -107,31 +107,32 @@ angular.module('oppia').directive('stewardsLandingPage', [
                 throw Error('Invalid tab name: ' + tabName);
               }
             };
+            ctrl.getStaticImageUrl = function (imagePath) {
+              return UrlInterpolationService.getStaticImageUrl(imagePath);
+            };
 
-            ctrl.getStaticImageUrl = UrlInterpolationService.getStaticImageUrl;
-
-            ctrl.getStaticSubjectImageUrl = function(subjectName) {
+            ctrl.getStaticSubjectImageUrl = function (subjectName) {
               return UrlInterpolationService.getStaticImageUrl('/subjects/' +
                 subjectName + '.svg');
             };
 
-            ctrl.onClickButton = function(buttonDefinition) {
+            ctrl.onClickButton = function (buttonDefinition) {
               SiteAnalyticsService.registerStewardsLandingPageEvent(
                 ctrl.activeTabName, buttonDefinition.text);
-              $timeout(function() {
+              $timeout(function () {
                 $window.location = buttonDefinition.href;
               }, 150);
             };
 
             // Note: This should be kept in sync with the CSS media query on
             // stewards-landing-page.mainpage.html.
-            var isWindowNarrow = function(windowWidthPx) {
+            var isWindowNarrow = function (windowWidthPx) {
               return windowWidthPx <= 890;
             };
 
             ctrl.windowIsNarrow = isWindowNarrow(
               WindowDimensionsService.getWidth());
-            WindowDimensionsService.registerOnResizeHook(function() {
+            WindowDimensionsService.registerOnResizeHook(function () {
               ctrl.windowIsNarrow = isWindowNarrow(
                 WindowDimensionsService.getWidth());
               $scope.$apply();

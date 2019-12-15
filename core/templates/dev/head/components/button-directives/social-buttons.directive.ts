@@ -16,22 +16,22 @@
  * @fileoverview Directive for the social buttons displayed in footer.
  */
 
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 
 angular.module('oppia').directive('socialButtons', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
       bindToController: {},
-      templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
-        '/components/button-directives/social-buttons.directive.html'),
+      template: require('!html-loader!./social-buttons.directive.html'),
       controllerAs: '$ctrl',
-      controller: [function() {
+      controller: [function () {
         var ctrl = this;
-        this.$onInit = function() {
-          ctrl.getStaticImageUrl = UrlInterpolationService.getStaticImageUrl;
-        };
-      }]
+        this.$onInit = function () {
+          ctrl.getStaticImageUrl = function (imagePath) {
+            return UrlInterpolationService.getStaticImageUrl(imagePath);
+          };
+        };]
     };
   }]);

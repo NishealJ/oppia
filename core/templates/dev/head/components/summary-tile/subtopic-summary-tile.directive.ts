@@ -16,10 +16,10 @@
  * @fileoverview Component for a subtopic tile.
  */
 
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 
 angular.module('oppia').directive('subtopicSummaryTile', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -33,21 +33,19 @@ angular.module('oppia').directive('subtopicSummaryTile', [
         '/components/summary-tile/subtopic-summary-tile.directive.html'),
       controllerAs: '$ctrl',
       controller: ['SUBTOPIC_VIEWER_URL_TEMPLATE',
-        function(SUBTOPIC_VIEWER_URL_TEMPLATE) {
+        function (SUBTOPIC_VIEWER_URL_TEMPLATE) {
           var ctrl = this;
-          this.$onInit = function() {
-            ctrl.getSubtopicLink = function() {
+          this.$onInit = function () {
+            ctrl.getSubtopicLink = function () {
               return UrlInterpolationService.interpolateUrl(
                 SUBTOPIC_VIEWER_URL_TEMPLATE, {
-                  topic_name: ctrl.getTopicName(),
-                  subtopic_id: ctrl.getSubtopicId().toString()
-                });
+                topic_name: ctrl.getTopicName(),
+                subtopic_id: ctrl.getSubtopicId().toString()
+              });
             };
-
-            ctrl.getStaticImageUrl = function(url) {
-              return UrlInterpolationService.getStaticImageUrl(url);
+            ctrl.getStaticImageUrl = function (imagePath) {
+              return UrlInterpolationService.getStaticImageUrl(imagePath);
             };
-          };
-        }]
+          }]
     };
   }]);

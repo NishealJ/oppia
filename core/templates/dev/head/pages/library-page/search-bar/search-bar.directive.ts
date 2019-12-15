@@ -18,17 +18,17 @@
 
 require('filters/string-utility-filters/truncate.filter.ts');
 
-require('domain/utilities/LanguageUtilService.ts');
-require('domain/utilities/UrlInterpolationService.ts');
-require('services/ConstructTranslationIdsService.ts');
-require('services/DebouncerService.ts');
-require('services/HtmlEscaperService.ts');
-require('services/NavigationService.ts');
-require('services/SearchService.ts');
-require('services/contextual/UrlService.ts');
+require('domain/utilities/language-util.service.ts');
+require('domain/utilities/url-interpolation.service.ts');
+require('services/construct-translation-ids.service.ts');
+require('services/debouncer.service.ts');
+require('services/html-escaper.service.ts');
+require('services/navigation.service.ts');
+require('services/search.service.ts');
+require('services/contextual/url.service.ts');
 
 angular.module('oppia').directive('searchBar', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -41,11 +41,11 @@ angular.module('oppia').directive('searchBar', [
         '$window', 'ConstructTranslationIdsService', 'DebouncerService',
         'HtmlEscaperService', 'LanguageUtilService', 'NavigationService',
         'SearchService', 'UrlService', 'SEARCH_DROPDOWN_CATEGORIES',
-        function(
-            $location, $rootScope, $scope, $timeout, $translate,
-            $window, ConstructTranslationIdsService, DebouncerService,
-            HtmlEscaperService, LanguageUtilService, NavigationService,
-            SearchService, UrlService, SEARCH_DROPDOWN_CATEGORIES) {
+        function (
+          $location, $rootScope, $scope, $timeout, $translate,
+          $window, ConstructTranslationIdsService, DebouncerService,
+          HtmlEscaperService, LanguageUtilService, NavigationService,
+          SearchService, UrlService, SEARCH_DROPDOWN_CATEGORIES) {
           var ctrl = this;
           /**
            * Opens the submenu.
@@ -53,7 +53,7 @@ angular.module('oppia').directive('searchBar', [
            * @param {String} menuName - name of menu, on which
            * open/close action to be performed (category,language).
            */
-          ctrl.openSubmenu = function(evt, menuName) {
+          ctrl.openSubmenu = function (evt, menuName) {
             NavigationService.openSubmenu(evt, menuName);
           };
           /**
@@ -68,15 +68,41 @@ angular.module('oppia').directive('searchBar', [
            *  onMenuKeypress($event, 'category', {enter: 'open'})
            */
 
-          ctrl.onMenuKeypress = function(evt, menuName, eventsTobeHandled) {
+          ctrl.onMenuKeypress = function (evt, menuName, eventsTobeHandled) {
             NavigationService.onMenuKeypress(
               evt, menuName, eventsTobeHandled);
             ctrl.activeMenuName = NavigationService.activeMenuName;
           };
+          ctrl.SUPPORTED_CONTENT_LANGUAGES = (
+            LanguageUtilService.getLanguageIdsAndTexts());
+
+          ctrl.searchQuery = '';
+          ctrl.selectionDetails = {
+            categories: {
+              description: '',
+              itemsName: 'categories',
+              masterList: ctrl.SEARCH_DROPDOWN_CATEGORIES,
+              numSelections: 0,
+              selections: {},
+              summary: ''
+            },
+            languageCodes: {
+              description: '',
+              itemsName: 'languages',
+              masterList: ctrl.SUPPORTED_CONTENT_LANGUAGES,
+              numSelections: 0,
+              selections: {},
+              summary: ''
+            }
+          };
+
+          // Non-translatable parts of the html strings, like numbers or user
+          // names.
+          ctrl.translationData = {};
 
           // Update the description, numSelections and summary fields of the
           // relevant entry of ctrl.selectionDetails.
-          var updateSelectionDetails = function(itemsType) {
+          var updateSelectionDetails = function (itemsType) {
             var itemsName = ctrl.selectionDetails[itemsType].itemsName;
             var masterList = ctrl.selectionDetails[itemsType].masterList;
 
@@ -93,9 +119,9 @@ angular.module('oppia').directive('searchBar', [
 
             ctrl.selectionDetails[itemsType].summary = (
               totalCount === 0 ? 'I18N_LIBRARY_ALL_' +
-              itemsName.toUpperCase() :
-              totalCount === 1 ? selectedItems[0] :
-              'I18N_LIBRARY_N_' + itemsName.toUpperCase());
+                itemsName.toUpperCase() :
+                totalCount === 1 ? selectedItems[0] :
+                  'I18N_LIBRARY_N_' + itemsName.toUpperCase());
             ctrl.translationData[itemsName + 'Count'] = totalCount;
 
             // TODO(milit): When the language changes, the translations won't
@@ -114,7 +140,7 @@ angular.module('oppia').directive('searchBar', [
             }
           };
 
-          ctrl.toggleSelection = function(itemsType, optionName) {
+          ctrl.toggleSelection = function (itemsType, optionName) {
             var selections = ctrl.selectionDetails[itemsType].selections;
             if (!selections.hasOwnProperty(optionName)) {
               selections[optionName] = true;
@@ -126,21 +152,21 @@ angular.module('oppia').directive('searchBar', [
             onSearchQueryChangeExec();
           };
 
-          ctrl.deselectAll = function(itemsType) {
+          ctrl.deselectAll = function (itemsType) {
             ctrl.selectionDetails[itemsType].selections = {};
             updateSelectionDetails(itemsType);
             onSearchQueryChangeExec();
           };
 
-          $scope.$watch('$ctrl.searchQuery', function(
-              newQuery, oldQuery) {
+          $scope.$watch('$ctrl.searchQuery', function (
+            newQuery, oldQuery) {
             // Run only if the query has changed.
             if (newQuery !== oldQuery) {
               onSearchQueryChangeExec();
             }
           });
 
-          var onSearchQueryChangeExec = function() {
+          var onSearchQueryChangeExec = function () {
             SearchService.executeSearchQuery(
               ctrl.searchQuery, ctrl.selectionDetails.categories.selections,
               ctrl.selectionDetails.languageCodes.selections);
@@ -153,7 +179,7 @@ angular.module('oppia').directive('searchBar', [
               $location.url('/find?q=' + searchUrlQueryString);
             } else {
               $window.location.href = '/search/find?q=' +
-              searchUrlQueryString;
+                searchUrlQueryString;
             }
           };
 
@@ -162,15 +188,15 @@ angular.module('oppia').directive('searchBar', [
             updateSelectionDetails(itemsType);
           }
 
-          var updateSearchFieldsBasedOnUrlQuery = function() {
+          var updateSearchFieldsBasedOnUrlQuery = function () {
             var oldQueryString = SearchService.getCurrentUrlQueryString();
 
             ctrl.selectionDetails.categories.selections = {};
             ctrl.selectionDetails.languageCodes.selections = {};
 
             ctrl.searchQuery =
-             SearchService.updateSearchFieldsBasedOnUrlQuery(
-               $window.location.search, ctrl.selectionDetails);
+              SearchService.updateSearchFieldsBasedOnUrlQuery(
+                $window.location.search, ctrl.selectionDetails);
 
             updateSelectionDetails('categories');
             updateSelectionDetails('languageCodes');
@@ -182,7 +208,7 @@ angular.module('oppia').directive('searchBar', [
             }
           };
 
-          $scope.$on('$locationChangeSuccess', function() {
+          $scope.$on('$locationChangeSuccess', function () {
             if (UrlService.getUrlParams().hasOwnProperty('q')) {
               updateSearchFieldsBasedOnUrlQuery();
             }
@@ -190,11 +216,11 @@ angular.module('oppia').directive('searchBar', [
 
           $scope.$on(
             'preferredLanguageCodesLoaded',
-            function(evt, preferredLanguageCodesList) {
+            function (evt, preferredLanguageCodesList) {
               angular.forEach(
-                preferredLanguageCodesList, function(languageCode) {
+                preferredLanguageCodesList, function (languageCode) {
                   var selections =
-                   ctrl.selectionDetails.languageCodes.selections;
+                    ctrl.selectionDetails.languageCodes.selections;
                   if (!selections.hasOwnProperty(languageCode)) {
                     selections[languageCode] = true;
                   } else {
@@ -220,7 +246,7 @@ angular.module('oppia').directive('searchBar', [
             }
           );
 
-          var refreshSearchBarLabels = function() {
+          var refreshSearchBarLabels = function () {
             // If you translate these strings in the html, then you must use a
             // filter because only the first 14 characters are displayed. That
             // would generate FOUC for languages other than English. As an
@@ -241,11 +267,11 @@ angular.module('oppia').directive('searchBar', [
 
           $rootScope.$on('$translateChangeSuccess', refreshSearchBarLabels);
 
-          this.$onInit = function() {
+          this.$onInit = function () {
             ctrl.isSearchInProgress = SearchService.isSearchInProgress;
             ctrl.SEARCH_DROPDOWN_CATEGORIES = (
               SEARCH_DROPDOWN_CATEGORIES.map(
-                function(categoryName) {
+                function (categoryName) {
                   return {
                     id: categoryName,
                     text: ConstructTranslationIdsService.getLibraryId(
@@ -257,7 +283,7 @@ angular.module('oppia').directive('searchBar', [
             ctrl.ACTION_OPEN = NavigationService.ACTION_OPEN;
             ctrl.ACTION_CLOSE = NavigationService.ACTION_CLOSE;
             ctrl.KEYBOARD_EVENT_TO_KEY_CODES =
-            NavigationService.KEYBOARD_EVENT_TO_KEY_CODES;
+              NavigationService.KEYBOARD_EVENT_TO_KEY_CODES;
 
             ctrl.ALL_LANGUAGE_CODES = (
               LanguageUtilService.getLanguageIdsAndTexts());

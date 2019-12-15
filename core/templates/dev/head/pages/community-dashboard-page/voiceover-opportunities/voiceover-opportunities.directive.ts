@@ -28,33 +28,32 @@ require(
   'translation-language.service.ts');
 
 angular.module('oppia').directive('voiceoverOpportunities', [
-  'UrlInterpolationService', function(
-      UrlInterpolationService) {
+  'UrlInterpolationService', function (
+    UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
       bindToController: {},
       templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
         '/pages/community-dashboard-page/translation-opportunities/' +
-      'translation-opportunities.directive.html'),
+        'translation-opportunities.directive.html'),
       controllerAs: '$ctrl',
       controller: [
         '$scope', 'ContributionOpportunitiesService',
-        'TranslationLanguageService', function(
-            $scope, ContributionOpportunitiesService,
-            TranslationLanguageService) {
+        'TranslationLanguageService', function (
+          $scope, ContributionOpportunitiesService,
+          TranslationLanguageService) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             ctrl.opportunities = [];
             ctrl.opportunitiesAreLoading = true;
             ctrl.moreOpportunitiesAvailable = true;
             ctrl.progressBarRequired = false;
-            var updateWithNewOpportunities = function(opportunities, more) {
+            var updateWithNewOpportunities = function (opportunities, more) {
               for (var index in opportunities) {
                 var opportunity = opportunities[index];
-                var subheading = (
-                  opportunity.topic_name + ' - ' + opportunity.story_title);
-                var heading = opportunity.chapter_title;
+                var subheading = opportunity.getOpportunitySubheading();
+                var heading = opportunity.getOpportunityHeading();
 
                 ctrl.opportunities.push({
                   heading: heading,
@@ -66,29 +65,52 @@ angular.module('oppia').directive('voiceoverOpportunities', [
               ctrl.opportunitiesAreLoading = false;
             };
 
-            $scope.$on('activeLanguageChanged', function() {
+            $scope.$on('activeLanguageChanged', function () {
               ctrl.opportunities = [];
               ctrl.opportunitiesAreLoading = true;
+              ctrl.moreOpportunitiesAvailable = true;
+              ctrl.progressBarRequired = false;
+              var updateWithNewOpportunities = function (opportunities, more) {
+                for (var index in opportunities) {
+                  var opportunity = opportunities[index];
+                  var subheading = (
+                    opportunity.topic_name + ' - ' + opportunity.story_title);
+                  var heading = opportunity.chapter_title;
+
+                  ctrl.opportunities.push({
+                    heading: heading,
+                    subheading: subheading,
+                    actionButtonTitle: 'Request to Voiceover'
+                  });
+                }
+                ctrl.moreOpportunitiesAvailable = more;
+                ctrl.opportunitiesAreLoading = false;
+              };
+
+              $scope.$on('activeLanguageChanged', function () {
+                ctrl.opportunities = [];
+                ctrl.opportunitiesAreLoading = true;
+                ContributionOpportunitiesService.getVoiceoverOpportunities(
+                  TranslationLanguageService.getActiveLanguageCode(),
+                  updateWithNewOpportunities);
+              });
+
+              ctrl.onLoadMoreOpportunities = function () {
+                if (
+                  !ctrl.opportunitiesAreLoading &&
+                  ctrl.moreOpportunitiesAvailable) {
+                  ctrl.opportunitiesAreLoading = true;
+                  ContributionOpportunitiesService.getMoreVoiceoverOpportunities(
+                    TranslationLanguageService.getActiveLanguageCode(),
+                    updateWithNewOpportunities);
+                }
+              };
+
               ContributionOpportunitiesService.getVoiceoverOpportunities(
                 TranslationLanguageService.getActiveLanguageCode(),
                 updateWithNewOpportunities);
-            });
-
-            ctrl.onLoadMoreOpportunities = function() {
-              if (
-                !ctrl.opportunitiesAreLoading &&
-                ctrl.moreOpportunitiesAvailable) {
-                ctrl.opportunitiesAreLoading = true;
-                ContributionOpportunitiesService.getMoreVoiceoverOpportunities(
-                  TranslationLanguageService.getActiveLanguageCode(),
-                  updateWithNewOpportunities);
-              }
             };
-
-            ContributionOpportunitiesService.getVoiceoverOpportunities(
-              TranslationLanguageService.getActiveLanguageCode(),
-              updateWithNewOpportunities);
-          };
+          }
         }]
     };
   }]);

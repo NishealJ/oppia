@@ -20,20 +20,20 @@
  * followed by the name of the arg.
  */
 
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 require('pages/exploration-player-page/services/image-preloader.service.ts');
-require('services/AssetsBackendApiService.ts');
-require('services/ContextService.ts');
-require('services/HtmlEscaperService.ts');
+require('services/assets-backend-api.service.ts');
+require('services/context.service.ts');
+require('services/html-escaper.service.ts');
 
 angular.module('oppia').directive('oppiaNoninteractiveImage', [
   'AssetsBackendApiService', 'ContextService',
   'HtmlEscaperService', 'ImagePreloaderService',
   'UrlInterpolationService', 'LOADING_INDICATOR_URL',
-  function(
-      AssetsBackendApiService, ContextService,
-      HtmlEscaperService, ImagePreloaderService,
-      UrlInterpolationService, LOADING_INDICATOR_URL) {
+  function (
+    AssetsBackendApiService, ContextService,
+    HtmlEscaperService, ImagePreloaderService,
+    UrlInterpolationService, LOADING_INDICATOR_URL) {
     return {
       restrict: 'E',
       scope: {},
@@ -41,9 +41,9 @@ angular.module('oppia').directive('oppiaNoninteractiveImage', [
       templateUrl: UrlInterpolationService.getExtensionResourceUrl(
         '/rich_text_components/Image/directives/image.directive.html'),
       controllerAs: '$ctrl',
-      controller: ['$attrs', function($attrs) {
+      controller: ['$attrs', function ($attrs) {
         var ctrl = this;
-        this.$onInit = function() {
+        this.$onInit = function () {
           ctrl.filepath = HtmlEscaperService.escapedJsonToObj(
             $attrs.filepathWithValue);
           ctrl.imageUrl = '';
@@ -67,15 +67,15 @@ angular.module('oppia').directive('oppiaNoninteractiveImage', [
               width: loadingIndicatorSize + 'px'
             };
 
-            ctrl.loadImage = function() {
+            ctrl.loadImage = function () {
               ctrl.isLoadingIndicatorShown = true;
               ctrl.isTryAgainShown = false;
               ImagePreloaderService.getImageUrl(ctrl.filepath)
-                .then(function(objectUrl) {
+                .then(function (objectUrl) {
                   ctrl.isTryAgainShown = false;
                   ctrl.isLoadingIndicatorShown = false;
                   ctrl.imageUrl = objectUrl;
-                }, function() {
+                }, function () {
                   ctrl.isTryAgainShown = true;
                   ctrl.isLoadingIndicatorShown = false;
                 });
@@ -86,9 +86,18 @@ angular.module('oppia').directive('oppiaNoninteractiveImage', [
             // preview mode. We don't have loading indicator or try again for
             // showing images in the exploration editor or in preview mode. So
             // we directly assign the url to the imageUrl.
-            ctrl.imageUrl = AssetsBackendApiService.getImageUrlForPreview(
-              ContextService.getEntityType(), ContextService.getEntityId(),
-              ctrl.filepath);
+            try {
+              ctrl.imageUrl = AssetsBackendApiService.getImageUrlForPreview(
+                ContextService.getEntityType(), ContextService.getEntityId(),
+                ctrl.filepath);
+            } catch (e) {
+              var additionalInfo = (
+                '\nEntity type: ' + ContextService.getEntityType() +
+                '\nEntity ID: ' + ContextService.getEntityId() +
+                '\nFilepath: ' + ctrl.filepath);
+              e.message += additionalInfo;
+              throw e;
+            }
           }
 
           ctrl.imageCaption = '';
@@ -101,7 +110,7 @@ angular.module('oppia').directive('oppiaNoninteractiveImage', [
             ctrl.imageAltText = HtmlEscaperService.escapedJsonToObj(
               $attrs.altWithValue);
           }
-        };
+        }
       }]
     };
   }

@@ -16,10 +16,10 @@
  * @fileoverview Component for a canonical story tile.
  */
 
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 
 angular.module('oppia').directive('storySummaryTile', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -32,20 +32,19 @@ angular.module('oppia').directive('storySummaryTile', [
         '/components/summary-tile/story-summary-tile.directive.html'),
       controllerAs: '$ctrl',
       controller: ['STORY_VIEWER_URL_TEMPLATE',
-        function(STORY_VIEWER_URL_TEMPLATE) {
+        function (STORY_VIEWER_URL_TEMPLATE) {
           var ctrl = this;
-          this.$onInit = function() {
-            ctrl.getStoryLink = function() {
+          this.$onInit = function () {
+            ctrl.getStoryLink = function () {
               return UrlInterpolationService.interpolateUrl(
                 STORY_VIEWER_URL_TEMPLATE, {
-                  story_id: ctrl.getStoryId()
-                });
+                story_id: ctrl.getStoryId()
+              });
             };
 
-            ctrl.getStaticImageUrl = function(url) {
-              return UrlInterpolationService.getStaticImageUrl(url);
+            ctrl.getStaticImageUrl = function (imagePath) {
+              return UrlInterpolationService.getStaticImageUrl(imagePath);
             };
-          };
-        }]
+          }]
     };
   }]);

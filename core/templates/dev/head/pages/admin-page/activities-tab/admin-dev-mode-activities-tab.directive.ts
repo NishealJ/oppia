@@ -18,7 +18,7 @@
  */
 
 require('domain/objects/NumberWithUnitsObjectFactory.ts');
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 require('pages/admin-page/services/admin-data.service.ts');
 require('pages/admin-page/services/admin-task-manager.service.ts');
 
@@ -27,8 +27,8 @@ require('pages/admin-page/admin-page.constants.ajs.ts');
 angular.module('oppia').directive('adminDevModeActivitiesTab', [
   '$http', '$window', 'AdminDataService', 'AdminTaskManagerService',
   'UrlInterpolationService', 'ADMIN_HANDLER_URL',
-  function($http, $window, AdminDataService, AdminTaskManagerService,
-      UrlInterpolationService, ADMIN_HANDLER_URL) {
+  function ($http, $window, AdminDataService, AdminTaskManagerService,
+    UrlInterpolationService, ADMIN_HANDLER_URL) {
     return {
       restrict: 'E',
       scope: {},
@@ -39,10 +39,10 @@ angular.module('oppia').directive('adminDevModeActivitiesTab', [
         '/pages/admin-page/activities-tab/' +
         'admin-dev-mode-activities-tab.directive.html'),
       controllerAs: '$ctrl',
-      controller: [function() {
+      controller: [function () {
         var ctrl = this;
-        this.$onInit = function() {
-          ctrl.reloadExploration = function(explorationId) {
+        this.$onInit = function () {
+          ctrl.reloadExploration = function (explorationId) {
             if (AdminTaskManagerService.isTaskRunning()) {
               return;
             }
@@ -57,10 +57,10 @@ angular.module('oppia').directive('adminDevModeActivitiesTab', [
             $http.post(ADMIN_HANDLER_URL, {
               action: 'reload_exploration',
               exploration_id: String(explorationId)
-            }).then(function() {
+            }).then(function () {
               ctrl.setStatusMessage('Data reloaded successfully.');
               AdminTaskManagerService.finishTask();
-            }, function(errorResponse) {
+            }, function (errorResponse) {
               ctrl.setStatusMessage(
                 'Server error: ' + errorResponse.data.error);
               AdminTaskManagerService.finishTask();
@@ -73,7 +73,7 @@ angular.module('oppia').directive('adminDevModeActivitiesTab', [
           ctrl.DEMO_EXPLORATIONS = {};
           ctrl.reloadingAllExplorationPossible = false;
           var demoExplorationIds = [];
-          ctrl.reloadAllExplorations = function() {
+          ctrl.reloadAllExplorations = function () {
             if (!ctrl.reloadingAllExplorationPossible) {
               return;
             }
@@ -91,7 +91,7 @@ angular.module('oppia').directive('adminDevModeActivitiesTab', [
             var numSucceeded = 0;
             var numFailed = 0;
             var numTried = 0;
-            var printResult = function() {
+            var printResult = function () {
               if (numTried < demoExplorationIds.length) {
                 ctrl.setStatusMessage(
                   'Processing...' + numTried + '/' +
@@ -111,11 +111,11 @@ angular.module('oppia').directive('adminDevModeActivitiesTab', [
               $http.post(ADMIN_HANDLER_URL, {
                 action: 'reload_exploration',
                 exploration_id: explorationId
-              }).then(function() {
+              }).then(function () {
                 ++numSucceeded;
                 ++numTried;
                 printResult();
-              }, function() {
+              }, function () {
                 ++numFailed;
                 ++numTried;
                 printResult();
@@ -123,14 +123,14 @@ angular.module('oppia').directive('adminDevModeActivitiesTab', [
             }
           };
 
-          AdminDataService.getDataAsync().then(function(response) {
+          AdminDataService.getDataAsync().then(function (response) {
             ctrl.DEMO_EXPLORATIONS = response.demo_explorations;
             ctrl.DEMO_COLLECTIONS = response.demo_collections;
             demoExplorationIds = response.demo_exploration_ids;
             ctrl.reloadingAllExplorationPossible = true;
           });
 
-          ctrl.generateDummyExplorations = function() {
+          ctrl.generateDummyExplorations = function () {
             // Generate dummy explorations with random title.
             if (ctrl.numDummyExpsToPublish > ctrl.numDummyExpsToGenerate) {
               ctrl.setStatusMessage(
@@ -143,17 +143,17 @@ angular.module('oppia').directive('adminDevModeActivitiesTab', [
               action: 'generate_dummy_explorations',
               num_dummy_exps_to_generate: ctrl.numDummyExpsToGenerate,
               num_dummy_exps_to_publish: ctrl.numDummyExpsToPublish
-            }).then(function() {
+            }).then(function () {
               ctrl.setStatusMessage(
                 'Dummy explorations generated successfully.');
-            }, function(errorResponse) {
+            }, function (errorResponse) {
               ctrl.setStatusMessage(
                 'Server error: ' + errorResponse.data.error);
             });
             AdminTaskManagerService.finishTask();
           };
 
-          ctrl.reloadCollection = function(collectionId) {
+          ctrl.reloadCollection = function (collectionId) {
             if (AdminTaskManagerService.isTaskRunning()) {
               return;
             }
@@ -161,23 +161,44 @@ angular.module('oppia').directive('adminDevModeActivitiesTab', [
               'This action is irreversible. Are you sure?')) {
               return;
             }
+            ctrl.loadNewStructuresData = function () {
+              AdminTaskManagerService.startTask();
+              ctrl.setStatusMessage('Processing...');
+              $http.post(ADMIN_HANDLER_URL, {
+                action: 'generate_dummy_new_structures_data'
+              }).then(function () {
+                ctrl.setStatusMessage(
+                  'Dummy new structures data generated successfully.');
+              }, function (errorResponse) {
+                ctrl.setStatusMessage(
+                  'Server error: ' + errorResponse.data.error);
+              });
+              AdminTaskManagerService.finishTask();
+            };
 
-            ctrl.setStatusMessage('Processing...');
+            ctrl.reloadCollection = function (collectionId) {
+              if (AdminTaskManagerService.isTaskRunning()) {
+                return;
+              }
+              if (!$window.confirm('This action is irreversible. Are you sure?')) {
+                return;
+              }
 
-            AdminTaskManagerService.startTask();
-            $http.post(ADMIN_HANDLER_URL, {
-              action: 'reload_collection',
-              collection_id: String(collectionId)
-            }).then(function() {
-              ctrl.setStatusMessage('Data reloaded successfully.');
-            }, function(errorResponse) {
-              ctrl.setStatusMessage(
-                'Server error: ' + errorResponse.data.error);
-            });
-            AdminTaskManagerService.finishTask();
-          };
-        };
-      }]
+              ctrl.setStatusMessage('Processing...');
+
+              AdminTaskManagerService.startTask();
+              $http.post(ADMIN_HANDLER_URL, {
+                action: 'reload_collection',
+                collection_id: String(collectionId)
+              }).then(function () {
+                ctrl.setStatusMessage('Data reloaded successfully.');
+              }, function (errorResponse) {
+                ctrl.setStatusMessage(
+                  'Server error: ' + errorResponse.data.error);
+              });
+              AdminTaskManagerService.finishTask();
+            };
+          }]
     };
   }
 ]);

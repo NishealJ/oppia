@@ -21,11 +21,11 @@ require(
   'components/common-layout-directives/common-elements/' +
   'sharing-links.directive.ts');
 
-require('domain/utilities/UrlInterpolationService.ts');
-require('services/contextual/UrlService.ts');
+require('domain/utilities/url-interpolation.service.ts');
+require('services/contextual/url.service.ts');
 
 angular.module('oppia').directive('collectionFooter', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -33,13 +33,13 @@ angular.module('oppia').directive('collectionFooter', [
         '/pages/collection-player-page/collection-footer/' +
         'collection-footer.directive.html'),
       controllerAs: '$ctrl',
-      controller: ['UrlService', function(UrlService) {
+      controller: ['UrlService', function (UrlService) {
         var ctrl = this;
-        this.$onInit = function() {
+        this.$onInit = function () {
           ctrl.collectionId = UrlService.getCollectionIdFromUrl();
-
-          ctrl.getStaticImageUrl = UrlInterpolationService.getStaticImageUrl;
-        };
-      }]
+          ctrl.getStaticImageUrl = function (imagePath) {
+            return UrlInterpolationService.getStaticImageUrl(imagePath);
+          };
+        }]
     };
   }]);

@@ -17,18 +17,18 @@
  */
 
 require('components/graph-services/graph-layout.service.ts');
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/utilities/url-interpolation.service.ts');
 require(
   'pages/exploration-editor-page/services/editor-first-time-events.service.ts');
 require(
   'components/state-editor/state-editor-properties-services/' +
   'state-editor.service.ts');
-require('services/EditabilityService.ts');
-require('services/UserService.ts');
-require('services/stateful/FocusManagerService.ts');
+require('services/editability.service.ts');
+require('services/user.service.ts');
+require('services/stateful/focus-manager.service.ts');
 
 angular.module('oppia').directive('outcomeDestinationEditor', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -46,19 +46,22 @@ angular.module('oppia').directive('outcomeDestinationEditor', [
         'StateEditorService', 'StateGraphLayoutService', 'UserService',
         'ENABLE_PREREQUISITE_SKILLS', 'EXPLORATION_AND_SKILL_ID_PATTERN',
         'PLACEHOLDER_OUTCOME_DEST',
-        function(
-            $scope, EditorFirstTimeEventsService, FocusManagerService,
-            StateEditorService, StateGraphLayoutService, UserService,
-            ENABLE_PREREQUISITE_SKILLS, EXPLORATION_AND_SKILL_ID_PATTERN,
-            PLACEHOLDER_OUTCOME_DEST) {
+        function (
+          $scope, EditorFirstTimeEventsService, FocusManagerService,
+          StateEditorService, StateGraphLayoutService, UserService,
+          ENABLE_PREREQUISITE_SKILLS, EXPLORATION_AND_SKILL_ID_PATTERN,
+          PLACEHOLDER_OUTCOME_DEST) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             var currentStateName = null;
             ctrl.canAddPrerequisiteSkill = (
               ENABLE_PREREQUISITE_SKILLS &&
               StateEditorService.isExplorationWhitelisted());
 
-            $scope.$on('saveOutcomeDestDetails', function() {
+            $scope.$on('saveOutcomeDestDetails', function () {
+              if (ctrl.isSelfLoop()) {
+                ctrl.outcome.dest = StateEditorService.getActiveStateName();
+              }
               // Create new state if specified.
               if (ctrl.outcome.dest === PLACEHOLDER_OUTCOME_DEST) {
                 EditorFirstTimeEventsService
@@ -73,7 +76,7 @@ angular.module('oppia').directive('outcomeDestinationEditor', [
             });
 
             ctrl.canEditRefresherExplorationId = null;
-            UserService.getUserInfoAsync().then(function(userInfo) {
+            UserService.getUserInfoAsync().then(function (userInfo) {
               // We restrict editing of refresher exploration IDs to
               // admins/moderators for now, since the feature is still in
               // development.
@@ -84,23 +87,23 @@ angular.module('oppia').directive('outcomeDestinationEditor', [
             ctrl.explorationAndSkillIdPattern =
               EXPLORATION_AND_SKILL_ID_PATTERN;
 
-            ctrl.isSelfLoop = function() {
+            ctrl.isSelfLoop = function () {
               return ctrl.outcome.dest === currentStateName;
             };
 
-            ctrl.onDestSelectorChange = function() {
+            ctrl.onDestSelectorChange = function () {
               if (ctrl.outcome.dest === PLACEHOLDER_OUTCOME_DEST) {
                 FocusManagerService.setFocus('newStateNameInputField');
               }
             };
 
-            ctrl.isCreatingNewState = function(outcome) {
+            ctrl.isCreatingNewState = function (outcome) {
               return outcome.dest === PLACEHOLDER_OUTCOME_DEST;
             };
 
             ctrl.newStateNamePattern = /^[a-zA-Z0-9.\s-]+$/;
             ctrl.destChoices = [];
-            $scope.$watch(StateEditorService.getStateNames, function() {
+            $scope.$watch(StateEditorService.getStateNames, function () {
               currentStateName = StateEditorService.getActiveStateName();
 
               var questionModeEnabled = StateEditorService.isInQuestionMode();
@@ -118,9 +121,9 @@ angular.module('oppia').directive('outcomeDestinationEditor', [
                 StateGraphLayoutService.getLastComputedArrangement());
               var allStateNames = StateEditorService.getStateNames();
 
-              // It is possible that lastComputedArrangement is null if the
-              // graph has never been rendered at the time this computation is
-              // being carried out.
+              // It is possible that lastComputedArrangement is null if the graph
+              // has never been rendered at the time this computation is being
+              // carried out.
               var stateNames = angular.copy(allStateNames);
               var stateName = null;
               if (lastComputedArrangement) {
@@ -140,8 +143,7 @@ angular.module('oppia').directive('outcomeDestinationEditor', [
                   stateName = allStateNames[i];
                   if (lastComputedArrangement.hasOwnProperty(stateName)) {
                     allStateScores[stateName] = (
-                      lastComputedArrangement[stateName].depth * (
-                        maxOffset + 1) +
+                      lastComputedArrangement[stateName].depth * (maxOffset + 1) +
                       lastComputedArrangement[stateName].offset);
                   } else {
                     // States that have just been added in the rule 'create new'
@@ -153,7 +155,7 @@ angular.module('oppia').directive('outcomeDestinationEditor', [
                   }
                 }
 
-                stateNames = allStateNames.sort(function(a, b) {
+                stateNames = allStateNames.sort(function (a, b) {
                   return allStateScores[a] - allStateScores[b];
                 });
               }
@@ -174,7 +176,7 @@ angular.module('oppia').directive('outcomeDestinationEditor', [
                 });
               }
             }, true);
-          };
+          }
         }]
     };
   }]);

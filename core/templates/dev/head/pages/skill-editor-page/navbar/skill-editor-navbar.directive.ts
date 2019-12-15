@@ -20,32 +20,32 @@ require(
   'components/common-layout-directives/common-elements/' +
   'loading-dots.directive.ts');
 
-require('domain/editor/undo_redo/UndoRedoService.ts');
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/editor/undo_redo/undo-redo.service.ts');
+require('domain/utilities/url-interpolation.service.ts');
 require('pages/skill-editor-page/services/skill-editor-routing.service.ts');
 require('pages/skill-editor-page/services/skill-editor-state.service.ts');
-require('services/AlertsService.ts');
+require('services/alerts.service.ts');
 
 require('pages/skill-editor-page/skill-editor-page.constants.ajs.ts');
 
 angular.module('oppia').directive('skillEditorNavbar', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
         '/pages/skill-editor-page/navbar/skill-editor-navbar.directive.html'),
       controller: [
-        '$scope', '$uibModal', 'AlertsService',
+        '$scope', '$uibModal', '$window', 'AlertsService',
         'UndoRedoService', 'SkillEditorStateService',
         'SkillRightsBackendApiService', 'SkillEditorRoutingService',
         'EVENT_SKILL_INITIALIZED', 'EVENT_SKILL_REINITIALIZED',
         'EVENT_UNDO_REDO_SERVICE_CHANGE_APPLIED',
-        function(
-            $scope, $uibModal, AlertsService,
-            UndoRedoService, SkillEditorStateService,
-            SkillRightsBackendApiService, SkillEditorRoutingService,
-            EVENT_SKILL_INITIALIZED, EVENT_SKILL_REINITIALIZED,
-            EVENT_UNDO_REDO_SERVICE_CHANGE_APPLIED) {
+        function (
+          $scope, $uibModal, $window, AlertsService,
+          UndoRedoService, SkillEditorStateService,
+          SkillRightsBackendApiService, SkillEditorRoutingService,
+          EVENT_SKILL_INITIALIZED, EVENT_SKILL_REINITIALIZED,
+          EVENT_UNDO_REDO_SERVICE_CHANGE_APPLIED) {
           $scope.skill = SkillEditorStateService.getSkill();
           $scope.skillRights = (
             SkillEditorStateService.getSkillRights());
@@ -55,11 +55,11 @@ angular.module('oppia').directive('skillEditorNavbar', [
           $scope.validationIssues = [];
           $scope.isSaveInProgress = SkillEditorStateService.isSavingSkill;
 
-          $scope.getChangeListCount = function() {
+          $scope.getChangeListCount = function () {
             return UndoRedoService.getChangeCount();
           };
 
-          $scope.selectQuestionsTab = function() {
+          $scope.selectQuestionsTab = function () {
             // This check is needed because if a skill has unsaved changes to
             // misconceptions, then these will be reflected in the questions
             // created at that time, but if page is refreshed/changes are
@@ -73,13 +73,13 @@ angular.module('oppia').directive('skillEditorNavbar', [
                 backdrop: true,
                 controller: [
                   '$scope', '$uibModalInstance',
-                  function($scope, $uibModalInstance) {
-                    $scope.cancel = function() {
+                  function ($scope, $uibModalInstance) {
+                    $scope.cancel = function () {
                       $uibModalInstance.dismiss('cancel');
                     };
                   }
                 ]
-              }).result.then(null, function() {
+              }).result.then(null, function () {
                 // This callback is triggered when the Cancel button is clicked.
                 // No further action is needed.
               });
@@ -88,16 +88,16 @@ angular.module('oppia').directive('skillEditorNavbar', [
             }
           };
 
-          var _validateSkill = function() {
+          var _validateSkill = function () {
             $scope.validationIssues = $scope.skill.getValidationIssues();
           };
 
-          $scope.discardChanges = function() {
+          $scope.discardChanges = function () {
             UndoRedoService.clearChanges();
             SkillEditorStateService.loadSkill($scope.skill.getId());
           };
 
-          $scope.getWarningsCount = function() {
+          $scope.getWarningsCount = function () {
             return $scope.validationIssues.length;
           };
 
@@ -106,31 +106,20 @@ angular.module('oppia').directive('skillEditorNavbar', [
           $scope.$on(
             EVENT_UNDO_REDO_SERVICE_CHANGE_APPLIED, _validateSkill);
 
-          $scope.isSkillSaveable = function() {
+          $scope.isSkillSaveable = function () {
             return (
               $scope.getChangeListCount() > 0 &&
               $scope.validationIssues.length === 0);
           };
 
-          $scope.isSkillPublishable = function() {
+          $scope.isSkillPublishable = function () {
             return (
               $scope.skillRights.isPrivate() &&
               $scope.validationIssues.length === 0 &&
               $scope.getChangeListCount() === 0);
           };
 
-          var _publishSkill = function() {
-            SkillRightsBackendApiService.setSkillPublic(
-              $scope.skill.getId(), $scope.skill.getVersion()).then(
-              function() {
-                $scope.skillRights.setPublic();
-                SkillEditorStateService.setSkillRights(
-                  $scope.skillRights);
-                AlertsService.addSuccessMessage('Skill Published.');
-              });
-          };
-
-          $scope.saveChanges = function() {
+          $scope.saveChanges = function () {
             var modalInstance = $uibModal.open({
               templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
                 '/pages/skill-editor-page/modal-templates/' +
@@ -138,47 +127,21 @@ angular.module('oppia').directive('skillEditorNavbar', [
               backdrop: true,
               controller: [
                 '$scope', '$uibModalInstance',
-                function($scope, $uibModalInstance) {
-                  $scope.save = function(commitMessage) {
+                function ($scope, $uibModalInstance) {
+                  $scope.save = function (commitMessage) {
                     $uibModalInstance.close(commitMessage);
                   };
-                  $scope.cancel = function() {
+                  $scope.cancel = function () {
                     $uibModalInstance.dismiss('cancel');
                   };
                 }
               ]
             });
 
-            modalInstance.result.then(function(commitMessage) {
+            modalInstance.result.then(function (commitMessage) {
               SkillEditorStateService.saveSkill(commitMessage);
               AlertsService.addSuccessMessage('Changes Saved.');
-            }, function() {
-              // This callback is triggered when the Cancel button is clicked.
-              // No further action is needed.
-            });
-          };
-
-          $scope.publishSkill = function() {
-            $uibModal.open({
-              templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
-                '/pages/skill-editor-page/modal-templates/' +
-                'skill-editor-pre-publish-modal.directive.html'),
-              backdrop: true,
-              controller: [
-                '$scope', '$uibModalInstance',
-                function(
-                    $scope, $uibModalInstance) {
-                  $scope.save = function() {
-                    $uibModalInstance.close();
-                  };
-
-                  $scope.cancel = function() {
-                    $uibModalInstance.dismiss('cancel');
-                  };
-                }]
-            }).result.then(function() {
-              _publishSkill();
-            }, function() {
+            }, function () {
               // This callback is triggered when the Cancel button is clicked.
               // No further action is needed.
             });

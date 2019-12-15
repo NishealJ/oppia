@@ -18,8 +18,8 @@
 
 angular.module('oppia').directive('fractionEditor', [
   'FractionObjectFactory', 'UrlInterpolationService',
-  function(
-      FractionObjectFactory, UrlInterpolationService) {
+  function (
+    FractionObjectFactory, UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -29,9 +29,9 @@ angular.module('oppia').directive('fractionEditor', [
       templateUrl: UrlInterpolationService.getExtensionResourceUrl(
         '/objects/templates/fraction-editor.directive.html'),
       controllerAs: '$ctrl',
-      controller: ['$scope', function($scope) {
+      controller: ['$scope', function ($scope) {
         var ctrl = this;
-        this.$onInit = function() {
+        this.$onInit = function () {
           var errorMessage = '';
           var fractionString = '0';
           if (ctrl.value !== null) {
@@ -42,19 +42,34 @@ angular.module('oppia').directive('fractionEditor', [
             label: fractionString
           };
 
-          $scope.$watch('$ctrl.localValue.label', function(newValue) {
+          $scope.$watch('$ctrl.localValue.label', function (newValue) {
             try {
-              ctrl.value = FractionObjectFactory.fromRawInputString(newValue);
+              var INTERMEDIATE_REGEX = /^\s*-?\s*$/;
+              if (!INTERMEDIATE_REGEX.test(newValue)) {
+                ctrl.value = FractionObjectFactory.fromRawInputString(newValue);
+              }
               errorMessage = '';
             } catch (parsingError) {
               errorMessage = parsingError.message;
             }
-          });
+            ctrl.localValue = {
+              label: fractionString
+            };
 
-          ctrl.getWarningText = function() {
-            return errorMessage;
+            $scope.$watch('$ctrl.localValue.label', function (newValue) {
+              try {
+                ctrl.value = FractionObjectFactory.fromRawInputString(newValue);
+                errorMessage = '';
+              } catch (parsingError) {
+                errorMessage = parsingError.message;
+              }
+            });
+
+            ctrl.getWarningText = function () {
+              return errorMessage;
+            };
           };
-        };
+        }
       }]
     };
   }]);

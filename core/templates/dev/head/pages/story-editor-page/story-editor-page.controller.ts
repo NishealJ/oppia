@@ -27,17 +27,17 @@ require(
 require('pages/story-editor-page/navbar/story-editor-navbar.directive.ts');
 require('pages/story-editor-page/editor-tab/story-editor.directive.ts');
 
-require('domain/editor/undo_redo/UndoRedoService.ts');
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/editor/undo_redo/undo-redo.service.ts');
+require('domain/utilities/url-interpolation.service.ts');
 require('pages/story-editor-page/services/story-editor-state.service.ts');
-require('services/PageTitleService.ts');
-require('services/contextual/UrlService.ts');
+require('services/page-title.service.ts');
+require('services/contextual/url.service.ts');
 
 require('pages/story-editor-page/story-editor-page.constants.ajs.ts');
 
 angular.module('oppia').directive('storyEditorPage', [
-  'UrlInterpolationService', function(
-      UrlInterpolationService) {
+  'UrlInterpolationService', function (
+    UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -50,48 +50,45 @@ angular.module('oppia').directive('storyEditorPage', [
         'StoryEditorStateService', 'UndoRedoService',
         'UrlInterpolationService', 'UrlService',
         'EVENT_STORY_INITIALIZED', 'EVENT_STORY_REINITIALIZED',
-        function(
-            $scope, $uibModal, $window, PageTitleService,
-            StoryEditorStateService, UndoRedoService,
-            UrlInterpolationService, UrlService,
-            EVENT_STORY_INITIALIZED, EVENT_STORY_REINITIALIZED) {
+        function (
+          $scope, $uibModal, $window, PageTitleService,
+          StoryEditorStateService, UndoRedoService,
+          UrlInterpolationService, UrlService,
+          EVENT_STORY_INITIALIZED, EVENT_STORY_REINITIALIZED) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             var TOPIC_EDITOR_URL_TEMPLATE = '/topic_editor/<topicId>';
             StoryEditorStateService.loadStory(UrlService.getStoryIdFromUrl());
 
-            ctrl.returnToTopicEditorPage = function() {
+            ctrl.returnToTopicEditorPage = function () {
               if (UndoRedoService.getChangeCount() > 0) {
                 var modalInstance = $uibModal.open({
                   templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
                     '/pages/story-editor-page/modal-templates/' +
-                    'save-pending-changes-modal.template.html'),
+                    'story-save-pending-changes-modal.template.html'),
                   backdrop: true,
                   controller: [
                     '$scope', '$uibModalInstance',
-                    function($scope, $uibModalInstance) {
-                      $scope.cancel = function() {
+                    function ($scope, $uibModalInstance) {
+                      $scope.cancel = function () {
                         $uibModalInstance.dismiss('cancel');
                       };
                     }
                   ]
-                }).result.then(function() {}, function() {
-                  // This callback is triggered when the Cancel button is
-                  // clicked. No further action is needed.
                 });
               } else {
                 $window.open(
                   UrlInterpolationService.interpolateUrl(
                     TOPIC_EDITOR_URL_TEMPLATE, {
-                      topicId:
-                        StoryEditorStateService.
-                          getStory().getCorrespondingTopicId()
-                    }
+                    topicId:
+                      StoryEditorStateService.
+                        getStory().getCorrespondingTopicId()
+                  }
                   ), '_self');
               }
             };
 
-            var setPageTitle = function() {
+            var setPageTitle = function () {
               PageTitleService.setPageTitle(
                 StoryEditorStateService.getStory().getTitle() + ' - Oppia');
             };

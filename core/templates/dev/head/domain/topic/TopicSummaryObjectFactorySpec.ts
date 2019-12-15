@@ -16,18 +16,17 @@
  * @fileoverview Tests for TopicSummaryObjectFactory.
  */
 
-require('domain/topic/TopicSummaryObjectFactory.ts');
+import { TopicSummaryObjectFactory } from
+  'domain/topic/TopicSummaryObjectFactory';
 
-describe('Topic summary object factory', function() {
-  var TopicSummaryObjectFactory = null;
-  var _sampleTopicSummary = null;
+describe('Topic summary object factory', () => {
+  let topicSummaryObjectFactory: TopicSummaryObjectFactory = null;
+  let _sampleTopicSummary = null;
 
-  beforeEach(angular.mock.module('oppia'));
+  beforeEach(() => {
+    topicSummaryObjectFactory = new TopicSummaryObjectFactory();
 
-  beforeEach(angular.mock.inject(function($injector) {
-    TopicSummaryObjectFactory = $injector.get('TopicSummaryObjectFactory');
-
-    var sampleTopicSummaryBackendDict = {
+    let sampleTopicSummaryBackendDict = {
       id: 'sample_topic_id',
       name: 'Topic Name',
       subtopic_count: 5,
@@ -35,11 +34,11 @@ describe('Topic summary object factory', function() {
       total_skill_count: 10,
       uncategorized_skill_count: 3
     };
-    _sampleTopicSummary = TopicSummaryObjectFactory.createFromBackendDict(
+    _sampleTopicSummary = topicSummaryObjectFactory.createFromBackendDict(
       sampleTopicSummaryBackendDict);
-  }));
+  });
 
-  it('should be able to get all the values', function() {
+  it('should be able to get all the values', () => {
     expect(_sampleTopicSummary.getId()).toEqual('sample_topic_id');
     expect(_sampleTopicSummary.getName()).toEqual('Topic Name');
     expect(_sampleTopicSummary.getSubtopicCount()).toEqual(5);

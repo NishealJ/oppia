@@ -21,16 +21,16 @@
 require(
   'components/forms/custom-forms-directives/select2-dropdown.directive.ts');
 
-require('domain/collection/CollectionUpdateService.ts');
-require('domain/collection/CollectionValidationService.ts');
-require('domain/utilities/UrlInterpolationService.ts');
+require('domain/collection/collection-update.service.ts');
+require('domain/collection/collection-validation.service.ts');
+require('domain/utilities/url-interpolation.service.ts');
 require('pages/collection-editor-page/collection-editor-page.directive.ts');
 require(
   'pages/collection-editor-page/services/collection-editor-state.service.ts');
-require('services/AlertsService.ts');
+require('services/alerts.service.ts');
 
 angular.module('oppia').directive('collectionDetailsEditor', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -42,24 +42,24 @@ angular.module('oppia').directive('collectionDetailsEditor', [
       controller: [
         '$scope', 'CollectionEditorStateService', 'CollectionUpdateService',
         'CollectionValidationService', 'AlertsService', 'ALL_CATEGORIES',
-        'ALL_LANGUAGE_CODES', 'COLLECTION_TITLE_INPUT_FOCUS_LABEL',
+        'SUPPORTED_CONTENT_LANGUAGES', 'COLLECTION_TITLE_INPUT_FOCUS_LABEL',
         'EVENT_COLLECTION_INITIALIZED', 'EVENT_COLLECTION_REINITIALIZED',
         'TAG_REGEX',
-        function(
-            $scope, CollectionEditorStateService, CollectionUpdateService,
-            CollectionValidationService, AlertsService, ALL_CATEGORIES,
-            ALL_LANGUAGE_CODES, COLLECTION_TITLE_INPUT_FOCUS_LABEL,
-            EVENT_COLLECTION_INITIALIZED, EVENT_COLLECTION_REINITIALIZED,
-            TAG_REGEX) {
+        function (
+          $scope, CollectionEditorStateService, CollectionUpdateService,
+          CollectionValidationService, AlertsService, ALL_CATEGORIES,
+          SUPPORTED_CONTENT_LANGUAGES, COLLECTION_TITLE_INPUT_FOCUS_LABEL,
+          EVENT_COLLECTION_INITIALIZED, EVENT_COLLECTION_REINITIALIZED,
+          TAG_REGEX) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             ctrl.collection = CollectionEditorStateService.getCollection();
             ctrl.COLLECTION_TITLE_INPUT_FOCUS_LABEL = (
               COLLECTION_TITLE_INPUT_FOCUS_LABEL);
             ctrl.hasPageLoaded = (
               CollectionEditorStateService.hasLoadedCollection);
             ctrl.CATEGORY_LIST_FOR_SELECT2 = ALL_CATEGORIES.map(
-              function(category) {
+              function (category) {
                 return {
                   id: category,
                   text: category
@@ -67,10 +67,10 @@ angular.module('oppia').directive('collectionDetailsEditor', [
               }
             );
 
-            ctrl.languageListForSelect = ALL_LANGUAGE_CODES;
+            ctrl.languageListForSelect = SUPPORTED_CONTENT_LANGUAGES;
             ctrl.TAG_REGEX = TAG_REGEX;
 
-            var refreshSettingsTab = function() {
+            var refreshSettingsTab = function () {
               ctrl.displayedCollectionTitle = ctrl.collection.getTitle();
               ctrl.displayedCollectionObjective = (
                 ctrl.collection.getObjective());
@@ -82,7 +82,7 @@ angular.module('oppia').directive('collectionDetailsEditor', [
                 ctrl.collection.getTags());
 
               var categoryIsInSelect2 = ctrl.CATEGORY_LIST_FOR_SELECT2.some(
-                function(categoryItem) {
+                function (categoryItem) {
                   return categoryItem.id === ctrl.collection.getCategory();
                 }
               );
@@ -100,35 +100,35 @@ angular.module('oppia').directive('collectionDetailsEditor', [
             $scope.$on(EVENT_COLLECTION_INITIALIZED, refreshSettingsTab);
             $scope.$on(EVENT_COLLECTION_REINITIALIZED, refreshSettingsTab);
 
-            ctrl.updateCollectionTitle = function() {
+            ctrl.updateCollectionTitle = function () {
               CollectionUpdateService.setCollectionTitle(
                 ctrl.collection, ctrl.displayedCollectionTitle);
             };
 
-            ctrl.updateCollectionObjective = function() {
+            ctrl.updateCollectionObjective = function () {
               CollectionUpdateService.setCollectionObjective(
                 ctrl.collection, ctrl.displayedCollectionObjective);
             };
 
-            ctrl.updateCollectionCategory = function() {
+            ctrl.updateCollectionCategory = function () {
               CollectionUpdateService.setCollectionCategory(
                 ctrl.collection, ctrl.displayedCollectionCategory);
             };
 
-            ctrl.updateCollectionLanguageCode = function() {
+            ctrl.updateCollectionLanguageCode = function () {
               CollectionUpdateService.setCollectionLanguageCode(
                 ctrl.collection, ctrl.displayedCollectionLanguage);
             };
 
             // Normalize the tags for the collection
-            var normalizeTags = function(tags) {
+            var normalizeTags = function (tags) {
               for (var i = 0; i < tags.length; i++) {
                 tags[i] = tags[i].trim().replace(/\s+/g, ' ');
               }
               return tags;
             };
 
-            ctrl.updateCollectionTags = function() {
+            ctrl.updateCollectionTags = function () {
               ctrl.displayedCollectionTags = normalizeTags(
                 ctrl.displayedCollectionTags);
               if (!CollectionValidationService.isTagValid(
