@@ -24,7 +24,7 @@ require('services/site-analytics.service.ts');
 require('services/user.service.ts');
 
 angular.module('oppia').directive('createActivityButton', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -37,19 +37,19 @@ angular.module('oppia').directive('createActivityButton', [
         'ExplorationCreationService', 'CollectionCreationService',
         'SiteAnalyticsService', 'UrlService', 'UserService',
         'ALLOW_YAML_FILE_UPLOAD',
-        function(
-            $timeout, $window, $uibModal,
-            ExplorationCreationService, CollectionCreationService,
-            SiteAnalyticsService, UrlService, UserService,
-            ALLOW_YAML_FILE_UPLOAD) {
+        function (
+          $timeout, $window, $uibModal,
+          ExplorationCreationService, CollectionCreationService,
+          SiteAnalyticsService, UrlService, UserService,
+          ALLOW_YAML_FILE_UPLOAD) {
           var ctrl = this;
-          this.$onInit = function() {
-            ctrl.creationInProgress = false;
-            ctrl.allowYamlFileUpload = ALLOW_YAML_FILE_UPLOAD;
+          ctrl.creationInProgress = false;
+          ctrl.allowYamlFileUpload = ALLOW_YAML_FILE_UPLOAD;
 
-            ctrl.canCreateCollections = null;
-            ctrl.userIsLoggedIn = null;
-            UserService.getUserInfoAsync().then(function(userInfo) {
+          ctrl.canCreateCollections = null;
+          ctrl.userIsLoggedIn = null;
+          this.$onInit = function () {
+            UserService.getUserInfoAsync().then(function (userInfo) {
               ctrl.canCreateCollections = userInfo.canCreateCollections();
               ctrl.userIsLoggedIn = userInfo.isLoggedIn();
             });
@@ -57,16 +57,16 @@ angular.module('oppia').directive('createActivityButton', [
             ctrl.showUploadExplorationModal = (
               ExplorationCreationService.showUploadExplorationModal);
 
-            ctrl.onRedirectToLogin = function(destinationUrl) {
+            ctrl.onRedirectToLogin = function (destinationUrl) {
               SiteAnalyticsService.registerStartLoginEvent(
                 'createActivityButton');
-              $timeout(function() {
+              $timeout(function () {
                 $window.location = destinationUrl;
               }, 150);
               return false;
             };
 
-            ctrl.initCreationProcess = function() {
+            ctrl.initCreationProcess = function () {
               // Without this, the modal keeps reopening when the window is
               // resized.
               if (ctrl.creationInProgress) {
@@ -87,23 +87,23 @@ angular.module('oppia').directive('createActivityButton', [
                   backdrop: true,
                   controller: [
                     '$scope', '$uibModalInstance',
-                    function($scope, $uibModalInstance) {
-                      UserService.getUserInfoAsync().then(function(userInfo) {
+                    function ($scope, $uibModalInstance) {
+                      UserService.getUserInfoAsync().then(function (userInfo) {
                         $scope.canCreateCollections = (
                           userInfo.canCreateCollections());
                       });
 
-                      $scope.chooseExploration = function() {
+                      $scope.chooseExploration = function () {
                         ExplorationCreationService.createNewExploration();
                         $uibModalInstance.close();
                       };
 
-                      $scope.chooseCollection = function() {
+                      $scope.chooseCollection = function () {
                         CollectionCreationService.createNewCollection();
                         $uibModalInstance.close();
                       };
 
-                      $scope.cancel = function() {
+                      $scope.cancel = function () {
                         $uibModalInstance.dismiss('cancel');
                       };
 
@@ -116,7 +116,7 @@ angular.module('oppia').directive('createActivityButton', [
                           '/activity/collection.svg'));
                     }],
                   windowClass: 'oppia-creation-modal'
-                }).result.then(function() {}, function() {
+                }).result.then(function () { }, function () {
                   ctrl.creationInProgress = false;
                 });
               }

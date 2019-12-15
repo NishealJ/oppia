@@ -22,9 +22,9 @@ require('services/nested-directives-recursion-timeout-prevention.service.ts');
 angular.module('oppia').directive('schemaBasedChoicesEditor', [
   'NestedDirectivesRecursionTimeoutPreventionService',
   'UrlInterpolationService',
-  function(
-      NestedDirectivesRecursionTimeoutPreventionService,
-      UrlInterpolationService) {
+  function (
+    NestedDirectivesRecursionTimeoutPreventionService,
+    UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -42,10 +42,10 @@ angular.module('oppia').directive('schemaBasedChoicesEditor', [
         'schema-based-choices-editor.directive.html'),
       controllerAs: '$ctrl',
       compile: NestedDirectivesRecursionTimeoutPreventionService.compile,
-      controller: ['$scope', function($scope) {
+      controller: ['$scope', function ($scope) {
         var ctrl = this;
-        this.$onInit = function() {
-          ctrl.getReadonlySchema = function() {
+        this.$onInit = function () {
+          ctrl.getReadonlySchema = function () {
             var readonlySchema = angular.copy(ctrl.schema());
             delete readonlySchema.choices;
             return readonlySchema;

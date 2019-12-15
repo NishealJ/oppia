@@ -40,11 +40,11 @@ angular.module('oppia').directive('conceptCard', [
           $scope, $filter, $rootScope,
           ConceptCardBackendApiService, ConceptCardObjectFactory) {
           var ctrl = this;
+          ctrl.conceptCards = [];
+          ctrl.currentConceptCard = null;
+          ctrl.numberOfWorkedExamplesShown = 0;
+          ctrl.loadingMessage = 'Loading';
           this.$onInit = function () {
-            ctrl.conceptCards = [];
-            ctrl.currentConceptCard = null;
-            ctrl.numberOfWorkedExamplesShown = 0;
-            ctrl.loadingMessage = 'Loading';
             ConceptCardBackendApiService.loadConceptCards(
               ctrl.getSkillIds()
             ).then(function (conceptCardBackendDicts) {

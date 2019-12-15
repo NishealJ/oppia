@@ -20,7 +20,7 @@ require('domain/utilities/url-interpolation.service.ts');
 
 angular.module('oppia').directive('profileLinkImage', [
   'UrlInterpolationService', 'SYSTEM_USER_IDS',
-  function(UrlInterpolationService, SYSTEM_USER_IDS) {
+  function (UrlInterpolationService, SYSTEM_USER_IDS) {
     return {
       restrict: 'E',
       scope: {},
@@ -33,14 +33,14 @@ angular.module('oppia').directive('profileLinkImage', [
       controllerAs: '$ctrl',
       controller: [
         '$http',
-        function($http) {
+        function ($http) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             var DEFAULT_PROFILE_IMAGE_PATH = (
               UrlInterpolationService.getStaticImageUrl(
                 '/avatar/user_blue_72px.png'));
 
-            ctrl.isUsernameLinkable = function(username) {
+            ctrl.isUsernameLinkable = function (username) {
               return SYSTEM_USER_IDS.indexOf(username) === -1;
             };
 
@@ -52,7 +52,7 @@ angular.module('oppia').directive('profileLinkImage', [
             // Returns a promise for the user profile picture, or the default
             // image if user is not logged in or has not uploaded a profile
             // picture, or the player is in preview mode.
-            $http.get(ctrl.profileImageUrl).then(function(response) {
+            $http.get(ctrl.profileImageUrl).then(function (response) {
               ctrl.profilePicture = (
                 response.data.profile_picture_data_url_for_username ||
                 DEFAULT_PROFILE_IMAGE_PATH);

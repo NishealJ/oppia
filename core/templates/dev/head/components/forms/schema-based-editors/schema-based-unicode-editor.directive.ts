@@ -26,7 +26,7 @@ require('domain/utilities/url-interpolation.service.ts');
 require('services/contextual/device-info.service.ts');
 
 angular.module('oppia').directive('schemaBasedUnicodeEditor', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -45,9 +45,9 @@ angular.module('oppia').directive('schemaBasedUnicodeEditor', [
       controllerAs: '$ctrl',
       controller: [
         '$scope', '$filter', '$sce', '$translate', 'DeviceInfoService',
-        function($scope, $filter, $sce, $translate, DeviceInfoService) {
+        function ($scope, $filter, $sce, $translate, DeviceInfoService) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             if (ctrl.uiConfig() && ctrl.uiConfig().coding_mode) {
               // Flag that is flipped each time the codemirror view is
               // shown. (The codemirror instance needs to be refreshed
@@ -58,7 +58,7 @@ angular.module('oppia').directive('schemaBasedUnicodeEditor', [
               ctrl.codemirrorOptions = {
                 // Convert tabs to spaces.
                 extraKeys: {
-                  Tab: function(cm) {
+                  Tab: function (cm) {
                     var spaces = Array(
                       cm.getOption('indentUnit') + 1).join(' ');
                     cm.replaceSelection(spaces);
@@ -82,32 +82,32 @@ angular.module('oppia').directive('schemaBasedUnicodeEditor', [
                 ctrl.codemirrorOptions.mode = ctrl.uiConfig().coding_mode;
               }
 
-              setTimeout(function() {
+              setTimeout(function () {
                 ctrl.codemirrorStatus = !ctrl.codemirrorStatus;
               }, 200);
 
               // When the form view is opened, flip the status flag. The
               // timeout seems to be needed for the line numbers etc. to display
               // properly.
-              $scope.$on('schemaBasedFormsShown', function() {
-                setTimeout(function() {
+              $scope.$on('schemaBasedFormsShown', function () {
+                setTimeout(function () {
                   ctrl.codemirrorStatus = !ctrl.codemirrorStatus;
                 }, 200);
               });
             }
 
-            ctrl.onKeypress = function(evt) {
+            ctrl.onKeypress = function (evt) {
               if (evt.keyCode === 13) {
                 $scope.$emit('submittedSchemaBasedUnicodeForm');
               }
             };
 
-            ctrl.getPlaceholder = function() {
+            ctrl.getPlaceholder = function () {
               if (!ctrl.uiConfig()) {
                 return '';
               } else {
                 if (!ctrl.uiConfig().placeholder &&
-                    DeviceInfoService.hasTouchEvents()) {
+                  DeviceInfoService.hasTouchEvents()) {
                   return $translate.instant(
                     'I18N_PLAYER_DEFAULT_MOBILE_PLACEHOLDER');
                 }
@@ -115,7 +115,7 @@ angular.module('oppia').directive('schemaBasedUnicodeEditor', [
               }
             };
 
-            ctrl.getRows = function() {
+            ctrl.getRows = function () {
               if (!ctrl.uiConfig()) {
                 return null;
               } else {
@@ -123,7 +123,7 @@ angular.module('oppia').directive('schemaBasedUnicodeEditor', [
               }
             };
 
-            ctrl.getCodingMode = function() {
+            ctrl.getCodingMode = function () {
               if (!ctrl.uiConfig()) {
                 return null;
               } else {
@@ -131,7 +131,7 @@ angular.module('oppia').directive('schemaBasedUnicodeEditor', [
               }
             };
 
-            ctrl.getDisplayedValue = function() {
+            ctrl.getDisplayedValue = function () {
               return $sce.trustAsHtml(
                 $filter('convertUnicodeWithParamsToHtml')(ctrl.localValue));
             };

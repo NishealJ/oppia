@@ -52,9 +52,10 @@ angular.module('oppia').directive('baseContent', [
           }
 
           var ctrl = this;
+
+          ctrl.iframed = UrlService.isIframed();
+          ctrl.siteFeedbackFormUrl = SITE_FEEDBACK_FORM_URL;
           this.$onInit = function () {
-            ctrl.iframed = UrlService.isIframed();
-            ctrl.siteFeedbackFormUrl = SITE_FEEDBACK_FORM_URL;
             ctrl.isSidebarShown = () => SidebarStatusService.isSidebarShown();
             ctrl.closeSidebarOnSwipe = () => SidebarStatusService.closeSidebar();
             ctrl.isBackgroundMaskActive = () => (

@@ -29,11 +29,12 @@ angular.module('oppia').directive('sideNavigationBar', [
       controllerAs: '$ctrl',
       controller: ['$timeout', '$window', function ($timeout, $window) {
         var ctrl = this;
+        ctrl.currentUrl = $window.location.pathname;
         this.$onInit = function () {
-          ctrl.currentUrl = $window.location.pathname;
           ctrl.getStaticImageUrl = function (imagePath) {
             return UrlInterpolationService.getStaticImageUrl(imagePath);
           };
-        }]
+        };
+      }]
     };
   }]);

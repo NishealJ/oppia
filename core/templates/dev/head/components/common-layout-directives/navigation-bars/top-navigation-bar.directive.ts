@@ -1,3 +1,4 @@
+
 // Copyright 2016 The Oppia Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,13 +48,13 @@ angular.module('oppia').directive('topNavigationBar', [
           SiteAnalyticsService, NavigationService, WindowDimensionsService,
           DebouncerService, DeviceInfoService, LOGOUT_URL) {
           var ctrl = this;
+          ctrl.isModerator = null;
+          ctrl.isAdmin = null;
+          ctrl.isTopicManager = null;
+          ctrl.isSuperAdmin = null;
+          ctrl.userIsLoggedIn = null;
+          ctrl.username = '';
           this.$onInit = function () {
-            ctrl.isModerator = null;
-            ctrl.isAdmin = null;
-            ctrl.isTopicManager = null;
-            ctrl.isSuperAdmin = null;
-            ctrl.userIsLoggedIn = null;
-            ctrl.username = '';
             UserService.getUserInfoAsync().then(function (userInfo) {
               if (userInfo.getPreferredSiteLanguageCode()) {
                 $translate.use(userInfo.getPreferredSiteLanguageCode());

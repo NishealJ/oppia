@@ -17,7 +17,7 @@
  */
 
 angular.module('oppia').directive('scoreRing', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -29,30 +29,30 @@ angular.module('oppia').directive('scoreRing', [
         '/components/score-ring/score-ring.directive.html'),
       controllerAs: '$ctrl',
       controller: ['$scope', '$timeout', '$window', 'COLORS_FOR_PASS_FAIL_MODE',
-        function($scope, $timeout, $window, COLORS_FOR_PASS_FAIL_MODE) {
+        function ($scope, $timeout, $window, COLORS_FOR_PASS_FAIL_MODE) {
           var ctrl = this;
-          this.$onInit = function() {
-            const circle = <SVGCircleElement>(
-              document.querySelector('.score-ring-circle'));
-            const radius = circle.r.baseVal.value;
-            const circumference = (radius * 2 * Math.PI);
+          const circle = <SVGCircleElement>(
+            document.querySelector('.score-ring-circle'));
+          const radius = circle.r.baseVal.value;
+          const circumference = (radius * 2 * Math.PI);
 
-            var setScore = function(percent) {
-              const offset = circumference - percent / 100 * circumference;
-              circle.style.strokeDashoffset = offset.toString();
-            };
+          var setScore = function (percent) {
+            const offset = circumference - percent / 100 * circumference;
+            circle.style.strokeDashoffset = offset.toString();
+          };
 
-            circle.style.strokeDasharray = `${circumference} ${circumference}`;
-            circle.style.strokeDashoffset = circumference.toString();
-            $scope.$watch(function() {
+          circle.style.strokeDasharray = `${circumference} ${circumference}`;
+          circle.style.strokeDashoffset = circumference.toString();
+          this.$onInit = function () {
+            $scope.$watch(function () {
               return ctrl.getScore();
-            }, function(newScore) {
+            }, function (newScore) {
               if (newScore && newScore > 0) {
                 setScore(newScore);
               }
             });
 
-            ctrl.getScoreRingColor = function() {
+            ctrl.getScoreRingColor = function () {
               if (ctrl.testIsPassed()) {
                 return COLORS_FOR_PASS_FAIL_MODE.PASSED_COLOR;
               } else {
@@ -60,7 +60,7 @@ angular.module('oppia').directive('scoreRing', [
               }
             };
 
-            ctrl.getScoreOuterRingColor = function() {
+            ctrl.getScoreOuterRingColor = function () {
               if (ctrl.testIsPassed()) {
                 // return color green when passed.
                 return COLORS_FOR_PASS_FAIL_MODE.PASSED_COLOR_OUTER;

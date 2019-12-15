@@ -109,7 +109,7 @@ angular.module('oppia').directive('voiceoverOpportunities', [
               ContributionOpportunitiesService.getVoiceoverOpportunities(
                 TranslationLanguageService.getActiveLanguageCode(),
                 updateWithNewOpportunities);
-            };
+            });
           }
         }]
     };

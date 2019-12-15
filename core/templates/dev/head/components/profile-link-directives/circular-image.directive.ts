@@ -19,7 +19,7 @@
 require('domain/utilities/url-interpolation.service.ts');
 
 angular.module('oppia').directive('circularImage', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -30,10 +30,10 @@ angular.module('oppia').directive('circularImage', [
       templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
         '/components/profile-link-directives/circular-image.directive.html'),
       controllerAs: '$ctrl',
-      controller: [function() {
+      controller: [function () {
         var ctrl = this;
-        this.$onInit = function() {
-          ctrl.isLinkAvailable = function() {
+        this.$onInit = function () {
+          ctrl.isLinkAvailable = function () {
             return ctrl.link() ? true : false;
           };
         };

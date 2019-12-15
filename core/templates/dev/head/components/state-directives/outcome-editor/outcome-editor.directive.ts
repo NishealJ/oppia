@@ -284,6 +284,7 @@ angular.module('oppia').directive('outcomeEditor', [
                 ctrl.destinationEditorIsOpen = false;
               };
             };
-          }]
+          };
+        }]
     };
   }]);

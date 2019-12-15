@@ -32,6 +32,7 @@ angular.module('oppia').directive('socialButtons', [
           ctrl.getStaticImageUrl = function (imagePath) {
             return UrlInterpolationService.getStaticImageUrl(imagePath);
           };
-        };]
+        };
+      }]
     };
   }]);

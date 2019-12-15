@@ -26,7 +26,7 @@ require('domain/utilities/url-interpolation.service.ts');
 require('services/stateful/focus-manager.service.ts');
 
 angular.module('oppia').directive('schemaBasedFloatEditor', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -44,28 +44,27 @@ angular.module('oppia').directive('schemaBasedFloatEditor', [
       controllerAs: '$ctrl',
       controller: [
         '$scope', '$filter', '$timeout', 'FocusManagerService',
-        function($scope, $filter, $timeout, FocusManagerService) {
+        function ($scope, $filter, $timeout, FocusManagerService) {
           var ctrl = this;
-          this.$onInit = function() {
-            ctrl.hasLoaded = false;
-            ctrl.isUserCurrentlyTyping = false;
-            ctrl.hasFocusedAtLeastOnce = false;
-
+          ctrl.hasLoaded = false;
+          ctrl.isUserCurrentlyTyping = false;
+          ctrl.hasFocusedAtLeastOnce = false;
+          this.$onInit = function () {
             ctrl.labelForErrorFocusTarget =
               FocusManagerService.generateFocusLabel();
 
-            ctrl.validate = function(localValue) {
+            ctrl.validate = function (localValue) {
               return $filter('isFloat')(localValue) !== undefined;
             };
 
-            ctrl.onFocus = function() {
+            ctrl.onFocus = function () {
               ctrl.hasFocusedAtLeastOnce = true;
               if (ctrl.onInputFocus) {
                 ctrl.onInputFocus();
               }
             };
 
-            ctrl.onBlur = function() {
+            ctrl.onBlur = function () {
               ctrl.isUserCurrentlyTyping = false;
               if (ctrl.onInputBlur) {
                 ctrl.onInputBlur();
@@ -73,7 +72,7 @@ angular.module('oppia').directive('schemaBasedFloatEditor', [
             };
 
             // TODO(sll): Move these to ng-messages when we move to Angular 1.3.
-            ctrl.getMinValue = function() {
+            ctrl.getMinValue = function () {
               for (var i = 0; i < ctrl.validators().length; i++) {
                 if (ctrl.validators()[i].id === 'is_at_least') {
                   return ctrl.validators()[i].min_value;
@@ -81,7 +80,7 @@ angular.module('oppia').directive('schemaBasedFloatEditor', [
               }
             };
 
-            ctrl.getMaxValue = function() {
+            ctrl.getMaxValue = function () {
               for (var i = 0; i < ctrl.validators().length; i++) {
                 if (ctrl.validators()[i].id === 'is_at_most') {
                   return ctrl.validators()[i].max_value;
@@ -89,7 +88,7 @@ angular.module('oppia').directive('schemaBasedFloatEditor', [
               }
             };
 
-            ctrl.onKeypress = function(evt) {
+            ctrl.onKeypress = function (evt) {
               if (evt.keyCode === 13) {
                 if (
                   Object.keys(ctrl.floatForm.floatValue.$error).length !== 0) {
@@ -109,7 +108,7 @@ angular.module('oppia').directive('schemaBasedFloatEditor', [
 
             // This prevents the red 'invalid input' warning message from
             // flashing at the outset.
-            $timeout(function() {
+            $timeout(function () {
               ctrl.hasLoaded = true;
             });
           };

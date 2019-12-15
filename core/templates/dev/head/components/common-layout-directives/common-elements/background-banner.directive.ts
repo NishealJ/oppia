@@ -19,7 +19,7 @@
 require('domain/utilities/url-interpolation.service.ts');
 
 angular.module('oppia').directive('backgroundBanner', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -29,9 +29,9 @@ angular.module('oppia').directive('backgroundBanner', [
         'background-banner.directive.html'),
       controllerAs: '$ctrl',
       controller: [
-        function() {
+        function () {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             var possibleBannerFilenames = [
               'bannerA.svg', 'bannerB.svg', 'bannerC.svg', 'bannerD.svg'];
             var bannerImageFilename = possibleBannerFilenames[

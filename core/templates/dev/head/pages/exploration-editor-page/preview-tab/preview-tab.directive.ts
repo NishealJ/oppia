@@ -77,8 +77,8 @@ angular.module('oppia').directive('previewTab', [
           PlayerCorrectnessFeedbackEnabledService, StateEditorService,
           UrlInterpolationService) {
           var ctrl = this;
-          this.$onInit = function () {
-            ctrl.isExplorationPopulated = false;
+          ctrl.isExplorationPopulated = false;
+          this.$onInt = function () {
             ExplorationDataService.getData().then(function () {
               var initStateNameForPreview = StateEditorService
                 .getActiveStateName();
@@ -126,71 +126,83 @@ angular.module('oppia').directive('previewTab', [
               } else {
                 deferred.resolve([]);
               }
-              ctrl.resetPreview = function () {
-                if (DebugInfoTrackerService.getSequenceOfActions()) {
-                  DebugInfoTrackerService.addAction('Preview Reset');
+
+              return deferred.promise;
+            };
+
+            ctrl.showParameterSummary = function () {
+              return (ExplorationFeaturesService.areParametersEnabled() &&
+                !angular.equals({}, ctrl.allParams));
+            };
+
+            ctrl.showSetParamsModal = function (manualParamChanges, callback) {
+              var modalInstance = $uibModal.open({
+                templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
+                  '/pages/exploration-editor-page/preview-tab/templates/' +
+                  'preview-set-parameters-modal.template.html'),
+                backdrop: 'static',
+                windowClass: 'oppia-preview-set-params-modal',
+                controller: [
+                  '$scope', '$uibModalInstance', 'RouterService',
+                  function ($scope, $uibModalInstance, RouterService) {
+                    $scope.manualParamChanges = manualParamChanges;
+                    $scope.previewParamModalOk = $uibModalInstance.close;
+                    $scope.previewParamModalCancel = function () {
+                      $uibModalInstance.dismiss('cancel');
+                      RouterService.navigateToMainTab();
+                    };
+                  }
+                ]
+              }).result.then(function () {
+                if (callback) {
+                  callback();
                 }
-                ctrl.previewWarning = '';
-                ctrl.isExplorationPopulated = false;
-                var initStateNameForPreview = (
-                  ExplorationInitStateNameService.savedMemento);
-                $timeout(function () {
-                  var explorationId = ContextService.getExplorationId();
-                  EditableExplorationBackendApiService.fetchApplyDraftExploration(
-                    explorationId).then(function (returnDict) {
-                      ExplorationEngineService.init(
-                        returnDict, null, null, null,
-                        function (
-                          unusedInitialStateName, unusedInitHtml, unusedNewParams) {
-                          ctrl.loadPreviewState(initStateNameForPreview, []);
-                        });
-                      PlayerCorrectnessFeedbackEnabledService.init(
-                        returnDict.correctness_feedback_enabled);
-                      NumberAttemptsService.reset();
-                    });
-                };
+              });
+            };
 
-                ctrl.loadPreviewState = function (stateName, manualParamChanges) {
-                  ExplorationEngineService.initSettingsFromEditor(
-                    stateName, manualParamChanges);
-                  ctrl.isExplorationPopulated = true;
-                };
+            ctrl.loadPreviewState = function (stateName, manualParamChanges) {
+              ExplorationEngineService.initSettingsFromEditor(
+                stateName, manualParamChanges);
+              ctrl.isExplorationPopulated = true;
+            };
 
-                ctrl.resetPreview = function () {
-                  ctrl.previewWarning = '';
-                  ctrl.isExplorationPopulated = false;
-                  var initStateNameForPreview = (
-                    ExplorationInitStateNameService.savedMemento);
-                  $timeout(function () {
-                    var explorationId = ContextService.getExplorationId();
-                    EditableExplorationBackendApiService.fetchApplyDraftExploration(
-                      explorationId).then(function (returnDict) {
-                        ExplorationEngineService.init(
-                          returnDict, null, null, null,
-                          function (
-                            unusedInitialStateName, unusedInitHtml,
-                            unusedNewParams) {
-                            ctrl.loadPreviewState(initStateNameForPreview, []);
-                          });
-                        PlayerCorrectnessFeedbackEnabledService.init(
-                          returnDict.correctness_feedback_enabled);
-                        NumberAttemptsService.reset();
+            ctrl.resetPreview = function () {
+              if (DebugInfoTrackerService.getSequenceOfActions()) {
+                DebugInfoTrackerService.addAction('Preview Reset');
+              }
+              ctrl.previewWarning = '';
+              ctrl.isExplorationPopulated = false;
+              var initStateNameForPreview = (
+                ExplorationInitStateNameService.savedMemento);
+              $timeout(function () {
+                var explorationId = ContextService.getExplorationId();
+                EditableExplorationBackendApiService.fetchApplyDraftExploration(
+                  explorationId).then(function (returnDict) {
+                    ExplorationEngineService.init(
+                      returnDict, null, null, null,
+                      function (
+                        unusedInitialStateName, unusedInitHtml, unusedNewParams) {
+                        ctrl.loadPreviewState(initStateNameForPreview, []);
                       });
-                  }, 200);
-                };
+                    PlayerCorrectnessFeedbackEnabledService.init(
+                      returnDict.correctness_feedback_enabled);
+                    NumberAttemptsService.reset();
+                  });
+              }, 200);
+            };
 
-                // This allows the active state to be kept up-to-date whilst
-                // navigating in preview mode, ensuring that the state does not
-                // change when toggling between editor and preview.
-                $scope.$on('updateActiveStateIfInEditor', function (evt, stateName) {
-                  StateEditorService.setActiveStateName(stateName);
-                });
+            // This allows the active state to be kept up-to-date whilst
+            // navigating in preview mode, ensuring that the state does not change
+            // when toggling between editor and preview.
+            $scope.$on('updateActiveStateIfInEditor', function (evt, stateName) {
+              StateEditorService.setActiveStateName(stateName);
+            });
 
-                ctrl.allParams = {};
-                $scope.$on('playerStateChange', function () {
-                  ctrl.allParams = LearnerParamsService.getAllParams();
-                });
-              };
-            }]
+            ctrl.allParams = {};
+            $scope.$on('playerStateChange', function () {
+              ctrl.allParams = LearnerParamsService.getAllParams();
+            });
+          }
+        }]
     };
   }]);

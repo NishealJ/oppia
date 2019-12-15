@@ -41,7 +41,7 @@ require('services/editability.service.ts');
 require('pages/interaction-specs.constants.ajs.ts');
 
 angular.module('oppia').directive('questionEditor', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -64,15 +64,17 @@ angular.module('oppia').directive('questionEditor', [
         'QuestionObjectFactory',
         'INTERACTION_SPECS', 'StateEditorService', 'ResponsesService',
         'SolutionValidityService', 'QuestionUpdateService',
-        function(
-            $scope, $rootScope, $uibModal,
-            AlertsService, QuestionCreationService,
-            EditabilityService, EditableQuestionBackendApiService,
-            QuestionObjectFactory,
-            INTERACTION_SPECS, StateEditorService, ResponsesService,
-            SolutionValidityService, QuestionUpdateService) {
+        function (
+          $scope, $rootScope, $uibModal,
+          AlertsService, QuestionCreationService,
+          EditabilityService, EditableQuestionBackendApiService,
+          QuestionObjectFactory,
+          INTERACTION_SPECS, StateEditorService, ResponsesService,
+          SolutionValidityService, QuestionUpdateService) {
           var ctrl = this;
-          this.$onInit = function() {
+          ctrl.stateEditorInitialized = false;
+          ctrl.interactionIsShown = false;
+          this.$onInit = function () {
             if (ctrl.canEditQuestion()) {
               EditabilityService.markEditable();
             } else {
@@ -84,32 +86,28 @@ angular.module('oppia').directive('questionEditor', [
             ctrl.oppiaBlackImgUrl = UrlInterpolationService.getStaticImageUrl(
               '/avatar/oppia_avatar_100px.svg');
 
-            ctrl.interactionIsShown = false;
-
-            ctrl.stateEditorInitialized = false;
-
-            ctrl.getStateContentPlaceholder = function() {
+            ctrl.getStateContentPlaceholder = function () {
               return (
                 'You can speak to the learner here, then ask them a question.');
             };
 
-            ctrl.navigateToState = function() {
+            ctrl.navigateToState = function () {
               return;
             };
 
-            ctrl.addState = function() {
+            ctrl.addState = function () {
               return;
             };
 
-            ctrl.recomputeGraph = function() {
+            ctrl.recomputeGraph = function () {
               return;
             };
 
-            ctrl.refreshWarnings = function() {
+            ctrl.refreshWarnings = function () {
               return;
             };
 
-            var _init = function() {
+            var _init = function () {
               StateEditorService.setStateNames([]);
               StateEditorService.setCorrectnessFeedbackEnabled(true);
               StateEditorService.setInQuestionMode(true);
@@ -128,7 +126,7 @@ angular.module('oppia').directive('questionEditor', [
               ctrl.stateEditorInitialized = true;
             };
 
-            var _updateQuestion = function(updateFunction) {
+            var _updateQuestion = function (updateFunction) {
               if (ctrl.questionChanged) {
                 ctrl.questionChanged();
               }
@@ -136,60 +134,60 @@ angular.module('oppia').directive('questionEditor', [
                 ctrl.question, updateFunction);
             };
 
-            ctrl.saveStateContent = function(displayedValue) {
+            ctrl.saveStateContent = function (displayedValue) {
               // Show the interaction when the text content is saved, even if no
               // content is entered.
-              _updateQuestion(function() {
+              _updateQuestion(function () {
                 var stateData = ctrl.question.getStateData();
                 stateData.content = angular.copy(displayedValue);
                 ctrl.interactionIsShown = true;
               });
             };
 
-            ctrl.saveInteractionId = function(displayedValue) {
-              _updateQuestion(function() {
+            ctrl.saveInteractionId = function (displayedValue) {
+              _updateQuestion(function () {
                 StateEditorService.setInteractionId(
                   angular.copy(displayedValue));
               });
             };
 
-            ctrl.saveInteractionAnswerGroups = function(newAnswerGroups) {
-              _updateQuestion(function() {
+            ctrl.saveInteractionAnswerGroups = function (newAnswerGroups) {
+              _updateQuestion(function () {
                 StateEditorService.setInteractionAnswerGroups(
                   angular.copy(newAnswerGroups));
               });
             };
 
-            ctrl.saveInteractionDefaultOutcome = function(newOutcome) {
-              _updateQuestion(function() {
+            ctrl.saveInteractionDefaultOutcome = function (newOutcome) {
+              _updateQuestion(function () {
                 StateEditorService.setInteractionDefaultOutcome(
                   angular.copy(newOutcome));
               });
             };
 
-            ctrl.saveInteractionCustomizationArgs = function(displayedValue) {
-              _updateQuestion(function() {
+            ctrl.saveInteractionCustomizationArgs = function (displayedValue) {
+              _updateQuestion(function () {
                 StateEditorService.setInteractionCustomizationArgs(
                   angular.copy(displayedValue));
               });
             };
 
-            ctrl.saveSolution = function(displayedValue) {
-              _updateQuestion(function() {
+            ctrl.saveSolution = function (displayedValue) {
+              _updateQuestion(function () {
                 StateEditorService.setInteractionSolution(
                   angular.copy(displayedValue));
               });
             };
 
-            ctrl.saveHints = function(displayedValue) {
-              _updateQuestion(function() {
+            ctrl.saveHints = function (displayedValue) {
+              _updateQuestion(function () {
                 StateEditorService.setInteractionHints(
                   angular.copy(displayedValue));
               });
             };
 
-            ctrl.showMarkAllAudioAsNeedingUpdateModalIfRequired = function(
-                contentId) {
+            ctrl.showMarkAllAudioAsNeedingUpdateModalIfRequired = function (
+              contentId) {
               var state = ctrl.question.getStateData();
               var recordedVoiceovers = state.recordedVoiceovers;
               var writtenTranslations = state.writtenTranslations;
@@ -202,29 +200,29 @@ angular.module('oppia').directive('questionEditor', [
                   backdrop: true,
                   controller: (
                     'MarkAllAudioAndTranslationsAsNeedingUpdateController')
-                }).result.then(function() {
-                  updateQuestion(function() {
+                }).result.then(function () {
+                  updateQuestion(function () {
                     recordedVoiceovers.markAllVoiceoversAsNeedingUpdate(
                       contentId);
                     writtenTranslations.markAllTranslationsAsNeedingUpdate(
                       contentId);
                   });
-                }, function() {
+                }, function () {
                   // This callback is triggered when the Cancel button is
                   // clicked. No further action is needed.
                 });
               }
             };
 
-            $scope.$on('stateEditorDirectiveInitialized', function(evt) {
+            $scope.$on('stateEditorDirectiveInitialized', function (evt) {
               _init();
             });
 
-            $scope.$on('interactionEditorInitialized', function(evt) {
+            $scope.$on('interactionEditorInitialized', function (evt) {
               _init();
             });
 
-            $scope.$on('onInteractionIdChanged', function(evt) {
+            $scope.$on('onInteractionIdChanged', function (evt) {
               _init();
             });
 

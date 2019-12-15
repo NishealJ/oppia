@@ -52,13 +52,12 @@ angular.module('oppia').directive(
           $scope, $uibModal, ContributionOpportunitiesService,
           TranslateTextService, TranslationLanguageService, UserService) {
           var ctrl = this;
+          var userIsLoggedIn = false;
+          ctrl.opportunities = [];
+          ctrl.opportunitiesAreLoading = true;
+          ctrl.moreOpportunitiesAvailable = true;
+          ctrl.progressBarRequired = true;
           this.$onInit = function () {
-            var userIsLoggedIn = false;
-            ctrl.opportunities = [];
-            ctrl.opportunitiesAreLoading = true;
-            ctrl.moreOpportunitiesAvailable = true;
-            ctrl.progressBarRequired = true;
-
             UserService.getUserInfoAsync().then(function (userInfo) {
               userIsLoggedIn = userInfo.isLoggedIn();
             });
@@ -100,149 +99,115 @@ angular.module('oppia').directive(
               ctrl.opportunities = [];
               ctrl.opportunitiesAreLoading = true;
               ctrl.moreOpportunitiesAvailable = true;
-              var updateWithNewOpportunities = function (opportunities, more) {
-                for (var index in opportunities) {
-                  var opportunity = opportunities[index];
-                  var subheading = (
-                    opportunity.topic_name + ' - ' + opportunity.story_title);
-                  var heading = opportunity.chapter_title;
-                  var progressPercentage = '0.00';
-                  var totalContentCount = opportunity.content_count;
-                  var languageCode = (
-                    TranslationLanguageService.getActiveLanguageCode());
-                  var languageDescription = (
-                    TranslationLanguageService.getActiveLanguageDescription());
-                  if (
-                    opportunity.translation_counts.hasOwnProperty(
-                      languageCode) && (
-                      totalContentCount > 0)) {
-                    var progressPercentage = (
-                      (opportunity.translation_counts[languageCode] /
-                        totalContentCount) * 100).toFixed(2);
-                  }
-                  ctrl.opportunities.push({
-                    heading: heading,
-                    subheading: subheading,
-                    progressPercentage: progressPercentage,
-                    actionButtonTitle: 'Translate'
-                  });
-                }
-                ctrl.moreOpportunitiesAvailable = more;
-                ctrl.opportunitiesAreLoading = false;
-              };
-
-              $scope.$on('activeLanguageChanged', function () {
-                ctrl.opportunities = [];
-                ctrl.opportunitiesAreLoading = true;
-                ctrl.moreOpportunitiesAvailable = true;
-                ContributionOpportunitiesService.getTranslationOpportunities(
-                  TranslationLanguageService.getActiveLanguageCode(),
-                  updateWithNewOpportunities);
-              });
-
-              ctrl.onLoadMoreOpportunities = function () {
-                if (
-                  !ctrl.opportunitiesAreLoading &&
-                  ctrl.moreOpportunitiesAvailable) {
-                  ctrl.opportunitiesAreLoading = true;
-                  ContributionOpportunitiesService
-                    .getMoreTranslationOpportunities(
-                      TranslationLanguageService.getActiveLanguageCode(),
-                      updateWithNewOpportunities);
-                }
-              };
-              ctrl.onClickButton = function (expId) {
-                var opportunity = getOpportunitySummary(expId);
-                $uibModal.open({
-                  templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
-                    '/pages/community-dashboard-page/modal-templates/' +
-                    'translation-modal.directive.html'),
-                  backdrop: 'static',
-                  size: 'lg',
-                  resolve: {
-                    opportunity: function () {
-                      return opportunity;
-                    },
-                    userIsLoggedIn: function () {
-                      return userIsLoggedIn;
-                    }
-                  },
-                  controller: [
-                    '$scope', '$uibModalInstance', 'opportunity', 'userIsLoggedIn',
-                    function (
-                      $scope, $uibModalInstance, opportunity, userIsLoggedIn) {
-                      $scope.userIsLoggedIn = userIsLoggedIn;
-                      $scope.uploadingTranslation = false;
-                      $scope.activeWrittenTranslation = {};
-                      $scope.activeWrittenTranslation.html = '';
-                      $scope.HTML_SCHEMA = {
-                        type: 'html',
-                        ui_config: {
-                          hide_complex_extensions: 'true'
-                        }
-                      };
-                      $scope.subheading = opportunity.subheading;
-                      $scope.heading = opportunity.heading;
-                      $scope.loadingData = true;
-                      $scope.moreAvailable = false;
-                      $scope.textToTranslate = '';
-                      $scope.languageDescription = (
-                        TranslationLanguageService.getActiveLanguageDescription());
-                      TranslateTextService.init(
-                        opportunity.id,
-                        TranslationLanguageService.getActiveLanguageCode(),
-                        function () {
-                          var textAndAvailability = (
-                            TranslateTextService.getTextToTranslate());
-                          $scope.textToTranslate = textAndAvailability.text;
-                          $scope.moreAvailable = textAndAvailability.more;
-                          $scope.loadingData = false;
-                        });
-                      $scope.skipActiveTranslation = function () {
-                        $scope.textToTranslate = (
-                          TranslateTextService.getTextToTranslate().text);
-                        $scope.activeWrittenTranslation.html = '';
-                      };
-                      $scope.suggestTranslatedText = function () {
-                        if (!$scope.uploadingTranslation && !$scope.loadingData) {
-                          $scope.uploadingTranslation = true;
-                          TranslateTextService.suggestTranslatedText(
-                            $scope.activeWrittenTranslation.html,
-                            TranslationLanguageService.getActiveLanguageCode(),
-                            function () {
-                              if ($scope.moreAvailable) {
-                                var textAndAvailability = (
-                                  TranslateTextService.getTextToTranslate());
-                                $scope.textToTranslate = textAndAvailability.text;
-                                $scope.moreAvailable = textAndAvailability.more;
-                              }
-                              $scope.activeWrittenTranslation.html = '';
-                              $scope.uploadingTranslation = false;
-                            });
-                        }
-                        if (!$scope.moreAvailable) {
-                          $uibModalInstance.dismiss('ok');
-                        }
-                      };
-                      $scope.done = function () {
-                        $uibModalInstance.close();
-                      };
-
-                      $scope.cancel = function () {
-                        $uibModalInstance.dismiss('cancel');
-                      };
-
-                      $scope.ok = function () {
-                        $uibModalInstance.dismiss('ok');
-                      };
-                    }
-                  ]
-                });
-              };
-
               ContributionOpportunitiesService.getTranslationOpportunities(
                 TranslationLanguageService.getActiveLanguageCode(),
                 updateWithNewOpportunities);
-            }]
+            });
+
+            ctrl.onLoadMoreOpportunities = function () {
+              if (
+                !ctrl.opportunitiesAreLoading &&
+                ctrl.moreOpportunitiesAvailable) {
+                ctrl.opportunitiesAreLoading = true;
+                ContributionOpportunitiesService.getMoreTranslationOpportunities(
+                  TranslationLanguageService.getActiveLanguageCode(),
+                  updateWithNewOpportunities);
+              }
+            };
+
+            ctrl.onClickButton = function (expId) {
+              var opportunity = getOpportunitySummary(expId);
+              $uibModal.open({
+                templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
+                  '/pages/community-dashboard-page/modal-templates/' +
+                  'translation-modal.directive.html'),
+                backdrop: 'static',
+                size: 'lg',
+                resolve: {
+                  opportunity: function () {
+                    return opportunity;
+                  },
+                  userIsLoggedIn: function () {
+                    return userIsLoggedIn;
+                  }
+                },
+                controller: [
+                  '$scope', '$uibModalInstance', 'opportunity', 'userIsLoggedIn',
+                  function (
+                    $scope, $uibModalInstance, opportunity, userIsLoggedIn) {
+                    $scope.userIsLoggedIn = userIsLoggedIn;
+                    $scope.uploadingTranslation = false;
+                    $scope.activeWrittenTranslation = {};
+                    $scope.activeWrittenTranslation.html = '';
+                    $scope.HTML_SCHEMA = {
+                      type: 'html',
+                      ui_config: {
+                        hide_complex_extensions: 'true'
+                      }
+                    };
+                    $scope.subheading = opportunity.subheading;
+                    $scope.heading = opportunity.heading;
+                    $scope.loadingData = true;
+                    $scope.moreAvailable = false;
+                    $scope.textToTranslate = '';
+                    $scope.languageDescription = (
+                      TranslationLanguageService.getActiveLanguageDescription());
+                    TranslateTextService.init(
+                      opportunity.id,
+                      TranslationLanguageService.getActiveLanguageCode(),
+                      function () {
+                        var textAndAvailability = (
+                          TranslateTextService.getTextToTranslate());
+                        $scope.textToTranslate = textAndAvailability.text;
+                        $scope.moreAvailable = textAndAvailability.more;
+                        $scope.loadingData = false;
+                      });
+                    $scope.skipActiveTranslation = function () {
+                      $scope.textToTranslate = (
+                        TranslateTextService.getTextToTranslate().text);
+                      $scope.activeWrittenTranslation.html = '';
+                    };
+                    $scope.suggestTranslatedText = function () {
+                      if (!$scope.uploadingTranslation && !$scope.loadingData) {
+                        $scope.uploadingTranslation = true;
+                        TranslateTextService.suggestTranslatedText(
+                          $scope.activeWrittenTranslation.html,
+                          TranslationLanguageService.getActiveLanguageCode(),
+                          function () {
+                            if ($scope.moreAvailable) {
+                              var textAndAvailability = (
+                                TranslateTextService.getTextToTranslate());
+                              $scope.textToTranslate = textAndAvailability.text;
+                              $scope.moreAvailable = textAndAvailability.more;
+                            }
+                            $scope.activeWrittenTranslation.html = '';
+                            $scope.uploadingTranslation = false;
+                          });
+                      }
+                      if (!$scope.moreAvailable) {
+                        $uibModalInstance.dismiss('ok');
+                      }
+                    };
+                    $scope.done = function () {
+                      $uibModalInstance.close();
+                    };
+
+                    $scope.cancel = function () {
+                      $uibModalInstance.dismiss('cancel');
+                    };
+
+                    $scope.ok = function () {
+                      $uibModalInstance.dismiss('ok');
+                    };
+                  }
+                ]
+              });
+            };
+
+            ContributionOpportunitiesService.getTranslationOpportunities(
+              TranslationLanguageService.getActiveLanguageCode(),
+              updateWithNewOpportunities);
+          }
+        }]
     };
   }]);

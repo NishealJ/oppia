@@ -20,7 +20,7 @@ require('domain/utilities/url-interpolation.service.ts');
 
 angular.module('oppia').directive('profileLinkText', [
   'UrlInterpolationService', 'SYSTEM_USER_IDS',
-  function(UrlInterpolationService, SYSTEM_USER_IDS) {
+  function (UrlInterpolationService, SYSTEM_USER_IDS) {
     return {
       restrict: 'E',
       scope: {},
@@ -31,10 +31,10 @@ angular.module('oppia').directive('profileLinkText', [
         '/components/profile-link-directives/' +
         'profile-link-text.directive.html'),
       controllerAs: '$ctrl',
-      controller: [function() {
+      controller: [function () {
         var ctrl = this;
-        this.$onInit = function() {
-          this.isUsernameLinkable = function(username) {
+        this.$onInit = function () {
+          this.isUsernameLinkable = function (username) {
             return SYSTEM_USER_IDS.indexOf(username) === -1;
           };
         };

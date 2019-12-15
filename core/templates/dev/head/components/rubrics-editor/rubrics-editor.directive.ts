@@ -53,12 +53,11 @@ angular.module('oppia').directive('rubricsEditor', [
           $scope, $filter, $uibModal, $rootScope,
           RubricObjectFactory, EVENT_SKILL_REINITIALIZED) {
           var ctrl = this;
+
+          ctrl.activeRubricIndex = 0;
+          ctrl.explanationEditorIsOpen = [false, false, false];
+          var explanationMemento = [null, null, null];
           this.$onInit = function () {
-
-            ctrl.activeRubricIndex = 0;
-            ctrl.explanationEditorIsOpen = [false, false, false];
-            var explanationMemento = [null, null, null];
-
             ctrl.isEditable = function () {
               return true;
             };
@@ -102,7 +101,8 @@ angular.module('oppia').directive('rubricsEditor', [
               ctrl.editableExplanation = explanationMemento[index];
               ctrl.explanationEditorIsOpen[ctrl.activeRubricIndex] = false;
             };
-          }]
+          };
+        }]
     };
   }
 ]);

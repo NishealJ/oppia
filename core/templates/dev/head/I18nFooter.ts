@@ -21,7 +21,7 @@
 require('services/translation-file-hash-loader.service.ts');
 
 angular.module('oppia').directive('i18nFooter', [
-  function() {
+  function () {
     return {
       restrict: 'E',
       scope: {},
@@ -31,20 +31,20 @@ angular.module('oppia').directive('i18nFooter', [
       controller: [
         '$http', '$timeout', '$translate', 'UserService',
         'SUPPORTED_SITE_LANGUAGES',
-        function(
-            $http, $timeout, $translate, UserService,
-            SUPPORTED_SITE_LANGUAGES) {
+        function (
+          $http, $timeout, $translate, UserService,
+          SUPPORTED_SITE_LANGUAGES) {
           var ctrl = this;
-          this.$onInit = function() {
-            // Changes the language of the translations.
-            var preferencesDataUrl = '/preferenceshandler/data';
-            var siteLanguageUrl = '/save_site_language';
-            ctrl.supportedSiteLanguages = SUPPORTED_SITE_LANGUAGES;
+          // Changes the language of the translations.
+          var preferencesDataUrl = '/preferenceshandler/data';
+          var siteLanguageUrl = '/save_site_language';
+          ctrl.supportedSiteLanguages = SUPPORTED_SITE_LANGUAGES;
 
-            // The $timeout seems to be necessary for the dropdown
-            // to show anything at the outset, if the default language
-            // is not English.
-            $timeout(function() {
+          // The $timeout seems to be necessary for the dropdown
+          // to show anything at the outset, if the default language
+          // is not English.
+          this.$onInit = function () {
+            $timeout(function () {
               // $translate.use() returns undefined until the language
               // file is fully loaded, which causes a blank field
               // in the dropdown, hence we use $translate.proposedLanguage()
@@ -53,9 +53,9 @@ angular.module('oppia').directive('i18nFooter', [
                 $translate.proposedLanguage();
             }, 50);
 
-            ctrl.changeLanguage = function() {
+            ctrl.changeLanguage = function () {
               $translate.use(ctrl.currentLanguageCode);
-              UserService.getUserInfoAsync().then(function(userInfo) {
+              UserService.getUserInfoAsync().then(function (userInfo) {
                 if (userInfo.isLoggedIn()) {
                   $http.put(siteLanguageUrl, {
                     site_language_code: ctrl.currentLanguageCode
@@ -71,10 +71,10 @@ angular.module('oppia').directive('i18nFooter', [
 
 angular.module('oppia').config([
   '$translateProvider', 'DEFAULT_TRANSLATIONS', 'SUPPORTED_SITE_LANGUAGES',
-  function($translateProvider, DEFAULT_TRANSLATIONS, SUPPORTED_SITE_LANGUAGES) {
+  function ($translateProvider, DEFAULT_TRANSLATIONS, SUPPORTED_SITE_LANGUAGES) {
     var availableLanguageKeys = [];
     var availableLanguageKeysMap = {};
-    SUPPORTED_SITE_LANGUAGES.forEach(function(language) {
+    SUPPORTED_SITE_LANGUAGES.forEach(function (language) {
       availableLanguageKeys.push(language.id);
       availableLanguageKeysMap[language.id + '*'] = language.id;
     });

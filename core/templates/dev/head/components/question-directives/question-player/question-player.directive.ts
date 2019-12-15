@@ -113,8 +113,8 @@ require('pages/interaction-specs.constants.ajs.ts');
 
 angular.module('oppia').directive('questionPlayer', [
   'UrlInterpolationService',
-  function(
-      UrlInterpolationService) {
+  function (
+    UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -136,26 +136,26 @@ angular.module('oppia').directive('questionPlayer', [
         'QUESTION_PLAYER_MODE', 'VIEW_HINT_PENALTY',
         'VIEW_HINT_PENALTY_FOR_MASTERY',
         'WRONG_ANSWER_PENALTY', 'WRONG_ANSWER_PENALTY_FOR_MASTERY',
-        function(
-            HASH_PARAM, MAX_SCORE_PER_QUESTION,
-            $scope, $sce, $rootScope, $location,
-            $sanitize, $timeout, $uibModal, $window,
-            AlertsService, HtmlEscaperService,
-            QuestionBackendApiService, SkillMasteryBackendApiService,
-            UrlService, UserService, COLORS_FOR_PASS_FAIL_MODE,
-            MAX_MASTERY_GAIN_PER_QUESTION, MAX_MASTERY_LOSS_PER_QUESTION,
-            QUESTION_PLAYER_MODE, VIEW_HINT_PENALTY,
-            VIEW_HINT_PENALTY_FOR_MASTERY,
-            WRONG_ANSWER_PENALTY, WRONG_ANSWER_PENALTY_FOR_MASTERY) {
+        function (
+          HASH_PARAM, MAX_SCORE_PER_QUESTION,
+          $scope, $sce, $rootScope, $location,
+          $sanitize, $timeout, $uibModal, $window,
+          AlertsService, HtmlEscaperService,
+          QuestionBackendApiService, SkillMasteryBackendApiService,
+          UrlService, UserService, COLORS_FOR_PASS_FAIL_MODE,
+          MAX_MASTERY_GAIN_PER_QUESTION, MAX_MASTERY_LOSS_PER_QUESTION,
+          QUESTION_PLAYER_MODE, VIEW_HINT_PENALTY,
+          VIEW_HINT_PENALTY_FOR_MASTERY,
+          WRONG_ANSWER_PENALTY, WRONG_ANSWER_PENALTY_FOR_MASTERY) {
           var ctrl = this;
-          this.$onInit = function() {
-            ctrl.userIsLoggedIn = null;
-            UserService.getUserInfoAsync().then(function(userInfo) {
+          ctrl.userIsLoggedIn = null;
+          this.$onInit = function () {
+            UserService.getUserInfoAsync().then(function (userInfo) {
               ctrl.canCreateCollections = userInfo.canCreateCollections();
               ctrl.userIsLoggedIn = userInfo.isLoggedIn();
             });
 
-            var initResults = function() {
+            var initResults = function () {
               $scope.resultsLoaded = false;
               ctrl.currentQuestion = 0;
               ctrl.totalQuestions = 0;
@@ -166,11 +166,11 @@ angular.module('oppia').directive('questionPlayer', [
             };
             initResults();
             ctrl.questionPlayerConfig = ctrl.getQuestionPlayerConfig();
-            var getStaticImageUrl = function(url) {
+            var getStaticImageUrl = function (url) {
               return UrlInterpolationService.getStaticImageUrl(url);
             };
 
-            ctrl.getActionButtonOuterClass = function(actionButtonType) {
+            ctrl.getActionButtonOuterClass = function (actionButtonType) {
               var className = getClassNameForType(actionButtonType);
               if (className) {
                 return className + 'outer';
@@ -178,7 +178,7 @@ angular.module('oppia').directive('questionPlayer', [
               return '';
             };
 
-            ctrl.getActionButtonInnerClass = function(actionButtonType) {
+            ctrl.getActionButtonInnerClass = function (actionButtonType) {
               var className = getClassNameForType(actionButtonType);
               if (className) {
                 return className + 'inner';
@@ -186,22 +186,22 @@ angular.module('oppia').directive('questionPlayer', [
               return '';
             };
 
-            ctrl.getActionButtonIconHtml = function(actionButtonType) {
+            ctrl.getActionButtonIconHtml = function (actionButtonType) {
               var iconHtml = '';
               if (actionButtonType === 'BOOST_SCORE') {
                 iconHtml = '<img class="action-button-icon" src="' +
-                getStaticImageUrl('/icons/rocket@2x.png') + '"/>';
+                  getStaticImageUrl('/icons/rocket@2x.png') + '"/>';
               } else if (actionButtonType === 'RETRY_SESSION') {
                 iconHtml = '<i class="material-icons md-36 ' +
-                'action-button-icon">&#xE5D5</i>';
+                  'action-button-icon">&#xE5D5</i>';
               } else if (actionButtonType === 'DASHBOARD') {
                 iconHtml = '<i class="material-icons md-36 ' +
-                'action-button-icon">&#xE88A</i>';
+                  'action-button-icon">&#xE88A</i>';
               }
               return $sce.trustAsHtml($sanitize(iconHtml));
             };
 
-            ctrl.performAction = function(actionButton) {
+            ctrl.performAction = function (actionButton) {
               if (actionButton.type === 'BOOST_SCORE') {
                 boostScoreModal();
               } else if (actionButton.url) {
@@ -209,18 +209,18 @@ angular.module('oppia').directive('questionPlayer', [
               }
             };
 
-            ctrl.showActionButtonsFooter = function() {
+            ctrl.showActionButtonsFooter = function () {
               return (ctrl.questionPlayerConfig.resultActionButtons &&
                 ctrl.questionPlayerConfig.resultActionButtons.length > 0);
             };
 
-            var getWorstSkillId = function() {
+            var getWorstSkillId = function () {
               var minScore = Number.MAX_VALUE;
               var worstSkillId = '';
-              Object.keys(ctrl.scorePerSkillMapping).forEach(function(skillId) {
+              Object.keys(ctrl.scorePerSkillMapping).forEach(function (skillId) {
                 var skillScoreData = ctrl.scorePerSkillMapping[skillId];
                 var scorePercentage =
-                skillScoreData.score / skillScoreData.total;
+                  skillScoreData.score / skillScoreData.total;
                 if (scorePercentage < minScore) {
                   minScore = scorePercentage;
                   worstSkillId = skillId;
@@ -229,9 +229,9 @@ angular.module('oppia').directive('questionPlayer', [
               return worstSkillId;
             };
 
-            var openConceptCardModal = function(skillIds) {
+            var openConceptCardModal = function (skillIds) {
               var skills = [];
-              skillIds.forEach(function(skillId) {
+              skillIds.forEach(function (skillId) {
                 skills.push(
                   ctrl.scorePerSkillMapping[skillId].description);
               });
@@ -243,46 +243,46 @@ angular.module('oppia').directive('questionPlayer', [
                 controller: [
                   '$scope', '$uibModalInstance', '$window',
                   'UrlService',
-                  function(
-                      $scope, $uibModalInstance, $window,
-                      UrlService) {
+                  function (
+                    $scope, $uibModalInstance, $window,
+                    UrlService) {
                     $scope.skillIds = skillIds;
                     $scope.skills = skills;
                     $scope.index = 0;
                     $scope.currentSkill = $scope.skills[$scope.index];
                     $scope.isInTestMode = true;
 
-                    $scope.isLastConceptCard = function() {
+                    $scope.isLastConceptCard = function () {
                       return $scope.index === $scope.skills.length - 1;
                     };
 
-                    $scope.closeModal = function() {
+                    $scope.closeModal = function () {
                       $uibModalInstance.dismiss('cancel');
                     };
 
-                    $scope.goToNextConceptCard = function() {
+                    $scope.goToNextConceptCard = function () {
                       $scope.index++;
                       $scope.currentSkill = $scope.skills[$scope.index];
                     };
 
-                    $scope.retryTest = function() {
+                    $scope.retryTest = function () {
                       $window.location.replace(UrlService.getPathname());
                     };
                   }
                 ]
-              }).result.then(function() {}, function() {
+              }).result.then(function () { }, function () {
                 // This callback is triggered when the Cancel button is
                 // clicked. No further action is needed.
               });
             };
 
 
-            var boostScoreModal = function() {
+            var boostScoreModal = function () {
               var worstSkillId = getWorstSkillId();
               openConceptCardModal([worstSkillId]);
             };
 
-            var getClassNameForType = function(actionButtonType) {
+            var getClassNameForType = function (actionButtonType) {
               if (actionButtonType === 'BOOST_SCORE') {
                 return 'boost-score-';
               }
@@ -295,17 +295,17 @@ angular.module('oppia').directive('questionPlayer', [
               return null;
             };
 
-            var updateCurrentQuestion = function(currentQuestion) {
+            var updateCurrentQuestion = function (currentQuestion) {
               ctrl.currentQuestion = currentQuestion;
               updateQuestionProgression();
             };
 
-            var updateTotalQuestions = function(totalQuestions) {
+            var updateTotalQuestions = function (totalQuestions) {
               ctrl.totalQuestions = totalQuestions;
               updateQuestionProgression();
             };
 
-            var updateQuestionProgression = function() {
+            var updateQuestionProgression = function () {
               if (getTotalQuestions() > 0) {
                 ctrl.currentProgress = (
                   getCurrentQuestion() * 100 / getTotalQuestions());
@@ -314,21 +314,21 @@ angular.module('oppia').directive('questionPlayer', [
               }
             };
 
-            var getCurrentQuestion = function() {
+            var getCurrentQuestion = function () {
               return ctrl.currentQuestion;
             };
 
-            var getTotalQuestions = function() {
+            var getTotalQuestions = function () {
               return ctrl.totalQuestions;
             };
 
-            var isInPassOrFailMode = function() {
+            var isInPassOrFailMode = function () {
               return (ctrl.questionPlayerConfig.questionPlayerMode &&
                 ctrl.questionPlayerConfig.questionPlayerMode.modeType ===
                 QUESTION_PLAYER_MODE.PASS_FAIL_MODE);
             };
 
-            var createScorePerSkillMapping = function() {
+            var createScorePerSkillMapping = function () {
               var scorePerSkillMapping = {};
               if (ctrl.questionPlayerConfig.skillList) {
                 for (var i = 0;
@@ -346,7 +346,7 @@ angular.module('oppia').directive('questionPlayer', [
               ctrl.scorePerSkillMapping = scorePerSkillMapping;
             };
 
-            var createMasteryPerSkillMapping = function() {
+            var createMasteryPerSkillMapping = function () {
               var masteryPerSkillMapping = {};
               if (ctrl.questionPlayerConfig.skillList) {
                 for (var i = 0;
@@ -358,7 +358,7 @@ angular.module('oppia').directive('questionPlayer', [
               ctrl.masteryPerSkillMapping = masteryPerSkillMapping;
             };
 
-            var createMasteryChangePerQuestion = function(questionData) {
+            var createMasteryChangePerQuestion = function (questionData) {
               var masteryChangePerQuestion = {};
               for (var i = 0; i < questionData.linkedSkillIds.length; i++) {
                 var skillId = questionData.linkedSkillIds[i];
@@ -368,7 +368,7 @@ angular.module('oppia').directive('questionPlayer', [
               return masteryChangePerQuestion;
             };
 
-            var calculateScores = function(questionStateData) {
+            var calculateScores = function (questionStateData) {
               createScorePerSkillMapping();
               $scope.resultsLoaded = false;
               var totalQuestions = Object.keys(questionStateData).length;
@@ -413,13 +413,13 @@ angular.module('oppia').directive('questionPlayer', [
               $scope.resultsLoaded = true;
             };
 
-            var getMasteryChangeForWrongAnswers = function(
-                answers, masteryChangePerQuestion) {
-              answers.forEach(function(answer) {
+            var getMasteryChangeForWrongAnswers = function (
+              answers, masteryChangePerQuestion) {
+              answers.forEach(function (answer) {
                 if (!answer.isCorrect) {
                   if (answer.taggedSkillMisconceptionId) {
                     var skillId =
-                    answer.taggedSkillMisconceptionId.split('-')[0];
+                      answer.taggedSkillMisconceptionId.split('-')[0];
                     if (masteryChangePerQuestion.hasOwnProperty(skillId)) {
                       masteryChangePerQuestion[skillId] -=
                         WRONG_ANSWER_PENALTY_FOR_MASTERY;
@@ -435,8 +435,8 @@ angular.module('oppia').directive('questionPlayer', [
               return masteryChangePerQuestion;
             };
 
-            var updateMasteryPerSkillMapping = function(
-                masteryChangePerQuestion) {
+            var updateMasteryPerSkillMapping = function (
+              masteryChangePerQuestion) {
               for (var skillId in masteryChangePerQuestion) {
                 if (!(skillId in ctrl.masteryPerSkillMapping)) {
                   continue;
@@ -448,7 +448,7 @@ angular.module('oppia').directive('questionPlayer', [
               }
             };
 
-            var calculateMasteryDegrees = function(questionStateData) {
+            var calculateMasteryDegrees = function (questionStateData) {
               createMasteryPerSkillMapping();
 
               for (var question in questionStateData) {
@@ -484,21 +484,21 @@ angular.module('oppia').directive('questionPlayer', [
                 ctrl.masteryPerSkillMapping);
             };
 
-            var hasUserPassedTest = function() {
+            var hasUserPassedTest = function () {
               var testIsPassed = true;
               var failedSkillIds = [];
               if (isInPassOrFailMode()) {
                 Object.keys(
-                  ctrl.scorePerSkillMapping).forEach(function(skillId) {
-                  var correctionRate =
-                  ctrl.scorePerSkillMapping[skillId].score /
-                    ctrl.scorePerSkillMapping[skillId].total;
-                  if (correctionRate <
-                    ctrl.questionPlayerConfig.questionPlayerMode.passCutoff) {
-                    testIsPassed = false;
-                    failedSkillIds.push(skillId);
-                  }
-                });
+                  ctrl.scorePerSkillMapping).forEach(function (skillId) {
+                    var correctionRate =
+                      ctrl.scorePerSkillMapping[skillId].score /
+                      ctrl.scorePerSkillMapping[skillId].total;
+                    if (correctionRate <
+                      ctrl.questionPlayerConfig.questionPlayerMode.passCutoff) {
+                      testIsPassed = false;
+                      failedSkillIds.push(skillId);
+                    }
+                  });
               }
 
               if (!testIsPassed) {
@@ -508,11 +508,11 @@ angular.module('oppia').directive('questionPlayer', [
               return testIsPassed;
             };
 
-            ctrl.getScorePercentage = function(scorePerSkill) {
+            ctrl.getScorePercentage = function (scorePerSkill) {
               return scorePerSkill.score / scorePerSkill.total * 100;
             };
 
-            ctrl.getColorForScore = function(scorePerSkill) {
+            ctrl.getColorForScore = function (scorePerSkill) {
               if (!isInPassOrFailMode()) {
                 return COLORS_FOR_PASS_FAIL_MODE.PASSED_COLOR;
               }
@@ -525,14 +525,14 @@ angular.module('oppia').directive('questionPlayer', [
               }
             };
 
-            ctrl.reviewConceptCardAndRetryTest = function() {
+            ctrl.reviewConceptCardAndRetryTest = function () {
               if (!ctrl.failedSkillIds || ctrl.failedSkillIds.length === 0) {
                 throw Error('No failed skills');
               }
               openConceptCardModal(ctrl.failedSkillIds);
             };
 
-            ctrl.openSkillMasteryModal = function(skillId) {
+            ctrl.openSkillMasteryModal = function (skillId) {
               $uibModal.open({
                 templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
                   '/components/question-directives/question-player/' +
@@ -540,44 +540,44 @@ angular.module('oppia').directive('questionPlayer', [
                 backdrop: true,
                 controller: [
                   '$scope', '$uibModalInstance',
-                  function(
-                      $scope, $uibModalInstance) {
+                  function (
+                    $scope, $uibModalInstance) {
                     $scope.skillId = skillId;
                     $scope.userIsLoggedIn = ctrl.userIsLoggedIn;
                     if ($scope.userIsLoggedIn) {
                       $scope.masteryChange =
-                      ctrl.masteryPerSkillMapping[skillId];
+                        ctrl.masteryPerSkillMapping[skillId];
                     }
 
-                    $scope.closeModal = function() {
+                    $scope.closeModal = function () {
                       $uibModalInstance.dismiss('cancel');
                     };
 
-                    $scope.openConceptCardModal = function(skillId) {
+                    $scope.openConceptCardModal = function (skillId) {
                       openConceptCardModal([skillId]);
                     };
                   }
                 ]
-              }).result.then(function() {}, function() {
+              }).result.then(function () { }, function () {
                 // This callback is triggered when the Cancel button is
                 // clicked. No further action is needed.
               });
             };
 
-            $rootScope.$on('currentQuestionChanged', function(event, result) {
+            $rootScope.$on('currentQuestionChanged', function (event, result) {
               updateCurrentQuestion(result + 1);
             });
 
-            $rootScope.$on('totalQuestionsReceived', function(event, result) {
+            $rootScope.$on('totalQuestionsReceived', function (event, result) {
               updateTotalQuestions(result);
             });
 
-            $rootScope.$on('questionSessionCompleted', function(event, result) {
+            $rootScope.$on('questionSessionCompleted', function (event, result) {
               $location.hash(HASH_PARAM +
                 encodeURIComponent(JSON.stringify(result)));
             });
 
-            $scope.$on('$locationChangeSuccess', function(event) {
+            $scope.$on('$locationChangeSuccess', function (event) {
               var hashContent = $location.hash();
               if (!hashContent || hashContent.indexOf(HASH_PARAM) === -1) {
                 return;

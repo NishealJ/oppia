@@ -198,7 +198,9 @@ angular.module('oppia').directive('adminDevModeActivitiesTab', [
               });
               AdminTaskManagerService.finishTask();
             };
-          }]
+          }
+        };
+      }]
     };
   }
 ]);

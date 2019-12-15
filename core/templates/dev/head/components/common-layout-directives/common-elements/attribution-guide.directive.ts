@@ -20,7 +20,7 @@ require('domain/utilities/browser-checker.service.ts');
 require('domain/utilities/url-interpolation.service.ts');
 
 angular.module('oppia').directive('attributionGuide', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -30,10 +30,10 @@ angular.module('oppia').directive('attributionGuide', [
         'attribution-guide.directive.html'),
       controllerAs: '$ctrl',
       controller: [
-        'BrowserCheckerService', 'UrlService', function(
-            BrowserCheckerService, UrlService) {
+        'BrowserCheckerService', 'UrlService', function (
+          BrowserCheckerService, UrlService) {
           var ctrl = this;
-          this.$onInit = function() {
+          this.$onInit = function () {
             ctrl.isMobileDevice = BrowserCheckerService.isMobileDevice();
             ctrl.iframed = UrlService.isIframed();
           };

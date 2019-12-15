@@ -68,7 +68,7 @@ angular.module('oppia').directive('fractionEditor', [
             ctrl.getWarningText = function () {
               return errorMessage;
             };
-          };
+          });
         }
       }]
     };

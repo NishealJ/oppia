@@ -32,7 +32,7 @@ require(
   'pages/exploration-player-page/exploration-player-page.constants.ajs.ts');
 
 angular.module('oppia').directive('hintAndSolutionButtons', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -47,26 +47,27 @@ angular.module('oppia').directive('hintAndSolutionButtons', [
         'HintAndSolutionModalService', 'DeviceInfoService', 'ContextService',
         'PlayerPositionService', 'EVENT_ACTIVE_CARD_CHANGED',
         'EVENT_NEW_CARD_OPENED', 'INTERACTION_SPECS', 'StatsReportingService',
-        function(
-            $scope, $rootScope, HintsAndSolutionManagerService,
-            PlayerTranscriptService, ExplorationPlayerStateService,
-            HintAndSolutionModalService, DeviceInfoService, ContextService,
-            PlayerPositionService, EVENT_ACTIVE_CARD_CHANGED,
-            EVENT_NEW_CARD_OPENED, INTERACTION_SPECS, StatsReportingService) {
+        function (
+          $scope, $rootScope, HintsAndSolutionManagerService,
+          PlayerTranscriptService, ExplorationPlayerStateService,
+          HintAndSolutionModalService, DeviceInfoService, ContextService,
+          PlayerPositionService, EVENT_ACTIVE_CARD_CHANGED,
+          EVENT_NEW_CARD_OPENED, INTERACTION_SPECS, StatsReportingService) {
           var ctrl = this;
-          this.$onInit = function() {
-            ctrl.hintIndexes = [];
-            var _editorPreviewMode = ContextService.isInExplorationEditorPage();
-            // Represents the index of the currently viewed hint.
-            ctrl.activeHintIndex = null;
-            ctrl.displayedCard = null;
-            ctrl.solutionModalIsActive = false;
-            ctrl.currentlyOnLatestCard = true;
-            ctrl.isHintConsumed = HintsAndSolutionManagerService.isHintConsumed;
+
+          ctrl.hintIndexes = [];
+          var _editorPreviewMode = ContextService.isInExplorationEditorPage();
+          // Represents the index of the currently viewed hint.
+          ctrl.activeHintIndex = null;
+          ctrl.displayedCard = null;
+          ctrl.solutionModalIsActive = false;
+          ctrl.currentlyOnLatestCard = true;
+          ctrl.isHintConsumed = HintsAndSolutionManagerService.isHintConsumed;
+          this.$onInit = function () {
             ctrl.isSolutionConsumed = (
               HintsAndSolutionManagerService.isSolutionConsumed);
 
-            var resetLocalHintsArray = function() {
+            var resetLocalHintsArray = function () {
               ctrl.hintIndexes = [];
               var numHints = HintsAndSolutionManagerService.getNumHints();
               for (var index = 0; index < numHints; index++) {
@@ -74,27 +75,27 @@ angular.module('oppia').directive('hintAndSolutionButtons', [
               }
             };
 
-            ctrl.isHintButtonVisible = function(index) {
+            ctrl.isHintButtonVisible = function (index) {
               return (
                 HintsAndSolutionManagerService.isHintViewable(index) &&
                 ctrl.displayedCard !== null &&
                 ctrl.displayedCard.doesInteractionSupportHints());
             };
 
-            ctrl.isSolutionButtonVisible = function() {
+            ctrl.isSolutionButtonVisible = function () {
               return HintsAndSolutionManagerService.isSolutionViewable();
             };
 
-            ctrl.displayHintModal = function(index) {
+            ctrl.displayHintModal = function (index) {
               ctrl.activeHintIndex = index;
               var promise = (
                 HintAndSolutionModalService.displayHintModal(index));
-              promise.result.then(null, function() {
+              promise.result.then(null, function () {
                 ctrl.activeHintIndex = null;
               });
             };
 
-            ctrl.onClickSolutionButton = function() {
+            ctrl.onClickSolutionButton = function () {
               ctrl.solutionModalIsActive = true;
               if (HintsAndSolutionManagerService.isSolutionConsumed()) {
                 ctrl.displaySolutionModal();
@@ -102,15 +103,15 @@ angular.module('oppia').directive('hintAndSolutionButtons', [
                 var interstitialModalPromise = (
                   HintAndSolutionModalService
                     .displaySolutionInterstitialModal());
-                interstitialModalPromise.result.then(function() {
+                interstitialModalPromise.result.then(function () {
                   ctrl.displaySolutionModal();
-                }, function() {
+                }, function () {
                   ctrl.solutionModalIsActive = false;
                 });
               }
             };
 
-            ctrl.displaySolutionModal = function() {
+            ctrl.displaySolutionModal = function () {
               ctrl.solutionModalIsActive = true;
               var inQuestionMode = (
                 ExplorationPlayerStateService.isInQuestionMode());
@@ -119,12 +120,12 @@ angular.module('oppia').directive('hintAndSolutionButtons', [
                   PlayerPositionService.getCurrentStateName());
               }
               var promise = HintAndSolutionModalService.displaySolutionModal();
-              promise.result.then(null, function() {
+              promise.result.then(null, function () {
                 ctrl.solutionModalIsActive = false;
               });
             };
 
-            $scope.$on(EVENT_NEW_CARD_OPENED, function(evt, newCard) {
+            $scope.$on(EVENT_NEW_CARD_OPENED, function (evt, newCard) {
               ctrl.displayedCard = newCard;
               HintsAndSolutionManagerService.reset(
                 newCard.getHints(), newCard.getSolution()
@@ -132,11 +133,11 @@ angular.module('oppia').directive('hintAndSolutionButtons', [
               resetLocalHintsArray();
             });
 
-            ctrl.isTooltipVisible = function() {
+            ctrl.isTooltipVisible = function () {
               return HintsAndSolutionManagerService.isHintTooltipOpen();
             };
 
-            $scope.$on(EVENT_ACTIVE_CARD_CHANGED, function(evt) {
+            $scope.$on(EVENT_ACTIVE_CARD_CHANGED, function (evt) {
               var displayedCardIndex =
                 PlayerPositionService.getDisplayedCardIndex();
               ctrl.currentlyOnLatestCard = PlayerTranscriptService.isLastCard(

@@ -692,7 +692,7 @@ angular.module('oppia').directive('learnerDashboardPage', [
                   // No further action is needed.
                 });
               };
-            };
+            });
         }]
     };
   }]).animation('.menu-sub-section', function () {

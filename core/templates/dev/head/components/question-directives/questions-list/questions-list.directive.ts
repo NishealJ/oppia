@@ -86,16 +86,15 @@ angular.module('oppia').directive('questionsList', [
           MODE_SELECT_SKILL, SKILL_DIFFICULTIES, StateEditorService,
           QuestionUndoRedoService, UndoRedoService, QuestionsListService) {
           var ctrl = this;
+          ctrl.skillIds = [];
+          ctrl.selectedSkillIds = [];
+          ctrl.associatedSkillSummaries = [];
+          ctrl.selectedSkillId = ctrl.getSelectedSkillId();
+          ctrl.getQuestionSummariesForOneSkill =
+            QuestionsListService.getCachedQuestionSummaries;
+          ctrl.getCurrentPageNumber = QuestionsListService.getCurrentPageNumber;
+          ctrl.editorIsOpen = false;
           this.$onInit = function () {
-            ctrl.skillIds = [];
-            ctrl.selectedSkillIds = [];
-            ctrl.associatedSkillSummaries = [];
-            ctrl.selectedSkillId = ctrl.getSelectedSkillId();
-            ctrl.getQuestionSummariesForOneSkill =
-              QuestionsListService.getCachedQuestionSummaries;
-            ctrl.getCurrentPageNumber = QuestionsListService.getCurrentPageNumber;
-            ctrl.editorIsOpen = false;
-
             var _reInitializeSelectedSkillIds = function () {
               ctrl.selectedSkillId = ctrl.getSelectedSkillId();
               if (ctrl.selectedSkillId !== null) {
@@ -316,20 +315,25 @@ angular.module('oppia').directive('questionsList', [
                   ctrl.initializeNewQuestionCreation(
                     ctrl.newQuestionSkillIds);
                 }
-                if (!ctrl.questionIsBeingUpdated) {
-                  EditableQuestionBackendApiService.createQuestion(
-                    ctrl.newQuestionSkillIds, ctrl.newQuestionSkillDifficulties,
-                    ctrl.question.toBackendDict(true)
-                  ).then(function () {
-                    ctrl.questionSummaries = ctrl.getQuestionSummariesAsync(
-                      0, ctrl.skillIds, true, true
-                    );
-                    ctrl.questionIsBeingSaved = false;
-                    ctrl.currentPage = 0;
+              });
+            };
+
+            ctrl.populateMisconceptions = function (skillIds) {
+              ctrl.misconceptionsBySkill = {};
+              EditableSkillBackendApiService.fetchMultiSkills(
+                skillIds).then(
+                  function (skillDicts) {
+                    skillDicts.forEach(function (skillDict) {
+                      ctrl.misconceptionsBySkill[skillDict.id] =
+                        skillDict.misconceptions.map(
+                          function (misconceptionsBackendDict) {
+                            return MisconceptionObjectFactory
+                              .createFromBackendDict(misconceptionsBackendDict);
+                          });
+                    });
+                  }, function (error) {
+                    AlertsService.addWarning();
                   });
-                }, function (error) {
-                  AlertsService.addWarning();
-                });
             };
 
             ctrl.editQuestion = function (questionSummaryForOneSkill, difficulty) {
@@ -665,160 +669,6 @@ angular.module('oppia').directive('questionsList', [
                         });
                         modalInstance.result.then(function () {
                           $uibModalInstance.dismiss('cancel');
-                        });
-                      } else {
-                        $uibModalInstance.dismiss('cancel');
-                      };
-
-                      $scope.closeModal = function () {
-                        $uibModalInstance.dismiss('ok');
-                      };
-
-                      init();
-                    }
-                ]
-              });
-
-              modalInstance.result.then(function (linkedSkillsWithDifficulty) {
-                ctrl.newQuestionSkillIds = [];
-                ctrl.newQuestionSkillDifficulties = [];
-                linkedSkillsWithDifficulty.forEach(
-                  function (linkedSkillWithDifficulty) {
-                    ctrl.newQuestionSkillIds.push(
-                      linkedSkillWithDifficulty.getId());
-                    ctrl.newQuestionSkillDifficulties.push(
-                      linkedSkillWithDifficulty.getDifficulty());
-                  }
-                );
-                ctrl.populateMisconceptions(ctrl.newQuestionSkillIds);
-                if (AlertsService.warnings.length === 0) {
-                  ctrl.initializeNewQuestionCreation(
-                    ctrl.newQuestionSkillIds);
-                }
-              }, function () {
-                // This callback is triggered when the Cancel button is clicked.
-                // No further action is needed.
-              });
-            };
-
-            ctrl.populateMisconceptions = function (skillIds) {
-              ctrl.misconceptionsBySkill = {};
-              EditableSkillBackendApiService.fetchMultiSkills(
-                skillIds).then(
-                  function (skillDicts) {
-                    skillDicts.forEach(function (skillDict) {
-                      ctrl.misconceptionsBySkill[skillDict.id] =
-                        skillDict.misconceptions.map(
-                          function (misconceptionsBackendDict) {
-                            return MisconceptionObjectFactory
-                              .createFromBackendDict(misconceptionsBackendDict);
-                          });
-                    });
-                  }, function (error) {
-                    AlertsService.addWarning();
-                  });
-            };
-
-            ctrl.editQuestion = function (questionSummary) {
-              ctrl.misconceptionsBySkill = {};
-              EditableQuestionBackendApiService.fetchQuestion(
-                questionSummary.id).then(function (response) {
-                  if (response.associated_skill_dicts) {
-                    response.associated_skill_dicts.forEach(function (skillDict) {
-                      ctrl.misconceptionsBySkill[skillDict.id] =
-                        skillDict.misconceptions.map(function (misconception) {
-                          return MisconceptionObjectFactory.createFromBackendDict(
-                            misconception);
-                        });
-                    });
-                  }
-                  ctrl.question =
-                    QuestionObjectFactory.createFromBackendDict(
-                      response.question_dict);
-                  ctrl.questionId = ctrl.question.getId();
-                  ctrl.questionStateData = ctrl.question.getStateData();
-                  ctrl.questionIsBeingUpdated = true;
-
-                  ctrl.openQuestionEditor();
-                }, function (errorResponse) {
-                  AlertsService.addWarning(
-                    errorResponse.error || 'Failed to fetch question.');
-                });
-            };
-
-            ctrl.openQuestionEditor = function () {
-              var question = ctrl.question;
-              var questionStateData = ctrl.questionStateData;
-              var questionId = ctrl.questionId;
-              var canEditQuestion = ctrl.canEditQuestion();
-              var misconceptionsBySkill = ctrl.misconceptionsBySkill;
-              QuestionUndoRedoService.clearChanges();
-
-              var modalInstance = $uibModal.open({
-                templateUrl: UrlInterpolationService.getDirectiveTemplateUrl(
-                  '/components/question-directives/modal-templates/' +
-                  'question-editor-modal.directive.html'),
-                backdrop: 'static',
-                keyboard: false,
-                controller: [
-                  '$scope', '$uibModalInstance', 'StateEditorService',
-                  'UndoRedoService',
-                  function (
-                    $scope, $uibModalInstance, StateEditorService,
-                    UndoRedoService) {
-                    $scope.question = question;
-                    $scope.questionStateData = questionStateData;
-                    $scope.questionId = questionId;
-                    $scope.misconceptionsBySkill = misconceptionsBySkill;
-                    $scope.canEditQuestion = canEditQuestion;
-                    $scope.removeErrors = function () {
-                      $scope.validationError = null;
-                    };
-                    $scope.questionChanged = function () {
-                      $scope.removeErrors();
-                    };
-                    $scope.done = function () {
-                      $scope.validationError = $scope.question.validate(
-                        $scope.misconceptionsBySkill);
-                      if ($scope.validationError) {
-                        return;
-                      }
-                      if (!StateEditorService.isCurrentSolutionValid()) {
-                        $scope.validationError =
-                          'The solution is invalid and does not ' +
-                          'correspond to a correct answer';
-                        return;
-                      }
-                      $uibModalInstance.close();
-                    };
-
-                    $scope.cancel = function () {
-                      if (QuestionUndoRedoService.hasChanges()) {
-                        var modalInstance = $uibModal.open({
-                          templateUrl:
-                            UrlInterpolationService.getDirectiveTemplateUrl(
-                              '/components/question-directives/' +
-                              'modal-templates/confirm-question-' +
-                              'modal-exit-modal.directive.html'),
-                          backdrop: true,
-                          controller: [
-                            '$scope', '$uibModalInstance',
-                            function ($scope, $uibModalInstance) {
-                              $scope.cancel = function () {
-                                $uibModalInstance.dismiss('cancel');
-                              };
-
-                              $scope.close = function () {
-                                $uibModalInstance.close();
-                              };
-                            }
-                          ]
-                        });
-                        modalInstance.result.then(function () {
-                          $uibModalInstance.dismiss('cancel');
-                        }, function () {
-                          // This callback is triggered when the Cancel button
-                          // is clicked. No further action is needed.
                         });
                       } else {
                         $uibModalInstance.dismiss('cancel');

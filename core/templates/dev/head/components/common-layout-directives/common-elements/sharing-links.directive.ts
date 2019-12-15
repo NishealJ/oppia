@@ -22,7 +22,7 @@ require('services/html-escaper.service.ts');
 require('services/site-analytics.service.ts');
 
 angular.module('oppia').directive('sharingLinks', [
-  'UrlInterpolationService', function(UrlInterpolationService) {
+  'UrlInterpolationService', function (UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
@@ -41,13 +41,13 @@ angular.module('oppia').directive('sharingLinks', [
         '$window', 'HtmlEscaperService',
         'ExplorationEmbedButtonService', 'SiteAnalyticsService',
         'DEFAULT_TWITTER_SHARE_MESSAGE_EDITOR',
-        function(
-            $window, HtmlEscaperService,
-            ExplorationEmbedButtonService, SiteAnalyticsService,
-            DEFAULT_TWITTER_SHARE_MESSAGE_EDITOR) {
+        function (
+          $window, HtmlEscaperService,
+          ExplorationEmbedButtonService, SiteAnalyticsService,
+          DEFAULT_TWITTER_SHARE_MESSAGE_EDITOR) {
           var ctrl = this;
-          this.$onInit = function() {
-            ctrl.registerShareEvent = null;
+          ctrl.registerShareEvent = null;
+          this.$onInit = function () {
 
             if (ctrl.shareType === 'exploration') {
               ctrl.explorationId = ctrl.getExplorationId();

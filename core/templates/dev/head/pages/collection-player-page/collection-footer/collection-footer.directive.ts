@@ -40,6 +40,7 @@ angular.module('oppia').directive('collectionFooter', [
           ctrl.getStaticImageUrl = function (imagePath) {
             return UrlInterpolationService.getStaticImageUrl(imagePath);
           };
-        }]
+        };
+      }]
     };
   }]);
