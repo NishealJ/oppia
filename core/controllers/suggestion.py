@@ -15,6 +15,7 @@
 # limitations under the License.
 
 """Controllers for suggestions."""
+
 from __future__ import absolute_import  # pylint: disable=import-only-modules
 from __future__ import unicode_literals  # pylint: disable=import-only-modules
 
@@ -181,8 +182,7 @@ class SuggestionToSkillActionHandler(base.BaseHandler):
                     suggestion_models.SUGGESTION_TYPE_ADD_QUESTION):
                 # The skill_id is passed only at the time of accepting the
                 # suggestion.
-                skill_id = self.payload.get('skill_id')
-                suggestion.change.skill_id = skill_id
+                suggestion.change.skill_id = target_id
             suggestion_services.accept_suggestion(
                 suggestion, self.user_id, self.payload.get('commit_message'),
                 self.payload.get('review_message'))

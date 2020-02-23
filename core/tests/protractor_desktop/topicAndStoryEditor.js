@@ -51,28 +51,19 @@ describe('Topic editor functionality', function() {
     users.createAndLoginAdminUser(
       'creator@topicEditor.com', 'creatorTopicEditor');
     topicsAndSkillsDashboardPage.get();
-    topicsAndSkillsDashboardPage.createTopicWithTitle('Topic 1');
+    topicsAndSkillsDashboardPage.createTopic('Topic 1', 'abbrev');
     browser.getCurrentUrl().then(function(url) {
       topicId = url.split('/')[4];
+    }, function() {
+      // Note to developers:
+      // Promise is returned by getCurrentUrl which is handled here.
+      // No further action is needed.
     });
   });
 
   beforeEach(function() {
     users.login('creator@topicEditor.com');
     topicEditorPage.get(topicId);
-  });
-
-  it('should edit topic name and description correctly', function() {
-    topicEditorPage.changeTopicName('Topic 1 edited');
-    topicEditorPage.changeTopicDescription('Topic Description');
-    topicEditorPage.saveTopic('Changed topic name and description.');
-
-    topicsAndSkillsDashboardPage.get();
-    topicsAndSkillsDashboardPage.expectTopicNameToBe('Topic 1 edited', 0);
-
-    topicEditorPage.get(topicId);
-    topicEditorPage.expectTopicNameToBe('Topic 1 edited');
-    topicEditorPage.expectTopicDescriptionToBe('Topic Description');
   });
 
   it('should add and delete subtopics correctly', function() {
@@ -139,6 +130,10 @@ describe('Topic editor functionality', function() {
       skillEditorPage.get(skillId);
       skillEditorPage.moveToQuestionsTab();
       skillEditorPage.expectNumberOfQuestionsToBe(1);
+    }, function() {
+      // Note to developers:
+      // Promise is returned by getCurrentUrl which is handled here.
+      // No further action is needed.
     });
   });
 
@@ -280,7 +275,7 @@ describe('Chapter editor functionality', function() {
       userEmail, 'creatorChapterTest');
     dummyExplorationIds = createDummyExplorations(3);
     topicsAndSkillsDashboardPage.get();
-    topicsAndSkillsDashboardPage.createTopicWithTitle(topicName);
+    topicsAndSkillsDashboardPage.createTopic(topicName, 'abbrev');
     topicEditorPage.createStory('Story 0');
     browser.getCurrentUrl().then(function(url) {
       storyId = url.split('/')[4];

@@ -24,24 +24,23 @@ require('services/alerts.service.ts');
 require('services/assets-backend-api.service.ts');
 require('services/context.service.ts');
 require('services/csrf-token.service.ts');
+require('services/image-upload-helper.service.ts');
 
 var gifFrames = require('gif-frames');
 var gifshot = require('gifshot');
 
 angular.module('oppia').directive('filepathEditor', [
-  '$sce', 'AlertsService', 'AssetsBackendApiService',
-  'ContextService', 'CsrfTokenService', 'UrlInterpolationService',
-  function(
-      $sce, AlertsService, AssetsBackendApiService,
-      ContextService, CsrfTokenService, UrlInterpolationService) {
+  '$sce', 'AlertsService', 'AssetsBackendApiService', 'ContextService',
+  'CsrfTokenService', 'ImageUploadHelperService', 'UrlInterpolationService',
+  function($sce, AlertsService, AssetsBackendApiService, ContextService,
+      CsrfTokenService, ImageUploadHelperService, UrlInterpolationService) {
     return {
       restrict: 'E',
       scope: {},
       bindToController: {
         value: '='
       },
-      templateUrl: UrlInterpolationService.getExtensionResourceUrl(
-        '/objects/templates/filepath-editor.directive.html'),
+      template: require('./filepath-editor.directive.html'),
       controllerAs: '$ctrl',
       controller: ['$scope', function($scope) {
         var ctrl = this;
@@ -177,30 +176,6 @@ angular.module('oppia').directive('filepathEditor', [
           });
         };
 
-
-
-        var convertImageDataToImageFile = function(dataURI) {
-          // Convert base64/URLEncoded data component to raw binary data
-          // held in a string.
-          var byteString = atob(dataURI.split(',')[1]);
-
-          // Separate out the mime component.
-          var mime = dataURI.split(',')[0].split(':')[1].split(';')[0];
-
-          // Write the bytes of the string to a typed array.
-          var ia = new Uint8Array(byteString.length);
-          for (var i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-          }
-
-          var blob = new Blob([ia], { type: mime });
-          if (blob.type.match('image') &&
-            blob.size > 0) {
-            return blob;
-          } else {
-            return null;
-          }
-        };
 
         var getEventCoorindatesRelativeToImageContainer = function(e) {
           // Even though the event listeners are added to the image container,
@@ -373,16 +348,6 @@ angular.module('oppia').directive('filepathEditor', [
               ctrl.entityType, ctrl.entityId, encodedFilepath));
         };
 
-        /** Scope variables and functions (visibles to the view) */
-
-        // Reset the component each time the value changes
-        // (e.g. if this is part of an editable list).
-        $scope.$watch('$ctrl.value', function(newValue) {
-          if (newValue) {
-            ctrl.setSavedImageFilename(newValue, false);
-          }
-        });
-
         ctrl.resetFilePathEditor = function() {
           ctrl.data = {
             mode: MODE_EMPTY,
@@ -552,7 +517,9 @@ angular.module('oppia').directive('filepathEditor', [
                 gifHeight: height,
                 images: frames
               }, function(obj) {
-                newImageFile = convertImageDataToImageFile(obj.image);
+                newImageFile = (
+                  ImageUploadHelperService.convertImageDataToImageFile(
+                    obj.image));
                 ctrl.updateDimensions(newImageFile, obj.image, width, height);
                 document.body.style.cursor = 'default';
               });
@@ -563,7 +530,9 @@ angular.module('oppia').directive('filepathEditor', [
               ctrl.data.metadata.uploadedImageData,
               x1, y1, width, height);
 
-            newImageFile = convertImageDataToImageFile(newImageData);
+            newImageFile = (
+              ImageUploadHelperService.convertImageDataToImageFile(
+                newImageData));
             ctrl.updateDimensions(newImageFile, newImageData, width, height);
           }
         };
@@ -737,7 +706,9 @@ angular.module('oppia').directive('filepathEditor', [
                 images: frames
               }, function(obj) {
                 if (!obj.error) {
-                  resampledFile = convertImageDataToImageFile(obj.image);
+                  resampledFile = (
+                    ImageUploadHelperService.convertImageDataToImageFile(
+                      obj.image));
                   if (resampledFile === null) {
                     AlertsService.addWarning('Could not get resampled file.');
                     return;
@@ -749,10 +720,10 @@ angular.module('oppia').directive('filepathEditor', [
             });
           } else {
             const resampledImageData = getResampledImageData(
-              imageDataURI,
-              dimensions.width,
-              dimensions.height);
-            resampledFile = convertImageDataToImageFile(resampledImageData);
+              imageDataURI, dimensions.width, dimensions.height);
+            resampledFile = (
+              ImageUploadHelperService.convertImageDataToImageFile(
+                resampledImageData));
             if (resampledFile === null) {
               AlertsService.addWarning('Could not get resampled file.');
               return;
@@ -766,7 +737,7 @@ angular.module('oppia').directive('filepathEditor', [
           let form = new FormData();
           form.append('image', resampledFile);
           form.append('payload', JSON.stringify({
-            filename: ctrl.generateImageFilename(
+            filename: ImageUploadHelperService.generateImageFilename(
               dimensions.height, dimensions.width, imageType)
           }));
           var imageUploadUrlTemplate = '/createhandler/imageupload/' +
@@ -808,78 +779,70 @@ angular.module('oppia').directive('filepathEditor', [
             });
           });
         };
+        ctrl.$onInit = function() {
+          /** Scope variables and functions (visibles to the view) */
 
+          // Reset the component each time the value changes
+          // (e.g. if this is part of an editable list).
+          $scope.$watch('$ctrl.value', function(newValue) {
+            if (newValue) {
+              ctrl.setSavedImageFilename(newValue, false);
+            }
+          });
+          // This variable holds information about the image upload flow.
+          // It's always guaranteed to have the 'mode' and 'metadata'
+          // properties.
+          //
+          // See below a description of each mode.
+          //
+          // MODE_EMPTY:
+          //   The user has not uploaded an image yet.
+          //   In this mode, data.metadata will be an empty object:
+          //     {}
+          //
+          // MODE_UPLOADED:
+          //   The user has uploaded an image but it is not yet saved.
+          //   All the crop and resizing happens at this stage.
+          //   In this mode, data.metadata will contain the following info:
+          //     {
+          //       uploadedFile: <a File object>,
+          //       uploadedImageData: <binary data corresponding to the image>,
+          //       originalWidth: <original width of the uploaded image>,
+          //       originalHeight: <original height of the uploaded image>
+          //     }
+          //
+          // MODE_SAVED:
+          //   The user has saved the final image for use in Oppia.
+          //   At this stage, the user can click on the trash to start over.
+          //   In this mode, data.metadata will contain the following info:
+          //     {
+          //       savedImageFilename: <File name of the resource for the image>
+          //       savedImageUrl: <Trusted resource Url for the image>
+          //     }
+          ctrl.data = { mode: MODE_EMPTY, metadata: {} };
 
-        ctrl.generateImageFilename = function(height, width,
-            imageType = 'png') {
-          var date = new Date();
-          return 'img_' +
-            date.getFullYear() +
-            ('0' + (date.getMonth() + 1)).slice(-2) +
-            ('0' + date.getDate()).slice(-2) +
-            '_' +
-            ('0' + date.getHours()).slice(-2) +
-            ('0' + date.getMinutes()).slice(-2) +
-            ('0' + date.getSeconds()).slice(-2) +
-            '_' +
-            Math.random().toString(36).substr(2, 10) +
-            '_height_' + height +
-            '_width_' + width +
-            '.' + OUTPUT_IMAGE_FORMAT[imageType];
-        };
+          // Resizing properties.
+          ctrl.imageResizeRatio = 1;
 
-        // This variable holds information about the image upload flow.
-        // It's always guaranteed to have the 'mode' and 'metadata' properties.
-        //
-        // See below a description of each mode.
-        //
-        // MODE_EMPTY:
-        //   The user has not uploaded an image yet.
-        //   In this mode, data.metadata will be an empty object:
-        //     {}
-        //
-        // MODE_UPLOADED:
-        //   The user has uploaded an image but it is not yet saved.
-        //   All the crop and resizing happens at this stage.
-        //   In this mode, data.metadata will contain the following info:
-        //     {
-        //       uploadedFile: <a File object>,
-        //       uploadedImageData: <binary data corresponding to the image>,
-        //       originalWidth: <original width of the uploaded image>,
-        //       originalHeight: <original height of the uploaded image>
-        //     }
-        //
-        // MODE_SAVED:
-        //   The user has saved the final image for use in Oppia.
-        //   At this stage, the user can click on the trash to start over.
-        //   In this mode, data.metadata will contain the following info:
-        //     {
-        //       savedImageFilename: <File name of the resource for the image>
-        //       savedImageUrl: <Trusted resource Url for the image>
-        //     }
-        ctrl.data = { mode: MODE_EMPTY, metadata: {} };
-
-        // Resizing properties.
-        ctrl.imageResizeRatio = 1;
-
-        // Cropping properties.
-        ctrl.cropArea = { x1: 0, y1: 0, x2: 0, y2: 0 };
-        ctrl.mousePositionWithinCropArea = null;
-        ctrl.mouseLastKnownCoordinates = { x: 0, y: 0 };
-        ctrl.lastMouseDownEventCoordinates = { x: 0, y: 0 };
-        ctrl.userIsDraggingCropArea = false;
-        ctrl.userIsResizingCropArea = false;
-        ctrl.cropAreaResizeDirection = null;
-
-        ctrl.entityId = ContextService.getEntityId();
-        ctrl.entityType = ContextService.getEntityType();
-        ctrl.resetFilePathEditor();
-
-        window.addEventListener('mouseup', function(e) {
-          e.preventDefault();
+          // Cropping properties.
+          ctrl.cropArea = { x1: 0, y1: 0, x2: 0, y2: 0 };
+          ctrl.mousePositionWithinCropArea = null;
+          ctrl.mouseLastKnownCoordinates = { x: 0, y: 0 };
+          ctrl.lastMouseDownEventCoordinates = { x: 0, y: 0 };
           ctrl.userIsDraggingCropArea = false;
           ctrl.userIsResizingCropArea = false;
-        }, false);
+          ctrl.cropAreaResizeDirection = null;
+
+          ctrl.entityId = ContextService.getEntityId();
+          ctrl.entityType = ContextService.getEntityType();
+          ctrl.resetFilePathEditor();
+
+          window.addEventListener('mouseup', function(e) {
+            e.preventDefault();
+            ctrl.userIsDraggingCropArea = false;
+            ctrl.userIsResizingCropArea = false;
+          }, false);
+        };
       }]
     };
   }

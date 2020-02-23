@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Common utility functions."""
+
 from __future__ import absolute_import  # pylint: disable=import-only-modules
 from __future__ import unicode_literals  # pylint: disable=import-only-modules
 
@@ -481,15 +482,7 @@ def vfs_construct_path(base_path, *path_components):
     Returns:
         str. The path that is obtained after adding the components.
     """
-    path = base_path
-    for component in path_components:
-        if component.startswith('/'):
-            path = component
-        elif path == '' or path.endswith('/'):
-            path += component
-        else:
-            path += '/%s' % component
-    return path
+    return os.path.join(base_path, *path_components)
 
 
 def vfs_normpath(path):
@@ -501,33 +494,7 @@ def vfs_normpath(path):
     Returns:
         str. Path if it is not null else a dot string.
     """
-    # Preserve unicode (if path is unicode).
-    slash, dot = (u'/', u'.') if isinstance(path, python_utils.UNICODE) else (
-        '/', '.')
-    if path == '':
-        return dot
-    initial_slashes = path.startswith('/')
-    # POSIX allows one or two initial slashes, but treats three or more
-    # as single slash.
-    if (initial_slashes and
-            path.startswith('//') and not path.startswith('///')):
-        initial_slashes = 2
-    comps = path.split('/')
-    new_comps = []
-    for comp in comps:
-        if comp in ('', '.'):
-            continue
-        if (comp != '..' or
-                (not initial_slashes and not new_comps) or
-                (new_comps and new_comps[-1] == '..')):
-            new_comps.append(comp)
-        elif new_comps:
-            new_comps.pop()
-    comps = new_comps
-    path = slash.join(comps)
-    if initial_slashes:
-        path = slash * initial_slashes + path
-    return path or dot
+    return os.path.normpath(path)
 
 
 def require_valid_name(name, name_type, allow_empty=False):
@@ -682,6 +649,21 @@ def unescape_encoded_uri_component(escaped_string):
             encodeURIComponent.
     """
     return python_utils.urllib_unquote(escaped_string).decode('utf-8')
+
+
+def snake_case_to_camel_case(snake_str):
+    """Converts a string in snake_case to camelCase.
+
+    Args:
+        snake_str: str. String that is in snake_case.
+
+    Returns:
+        str. Converted string that is in camelCase.
+    """
+    components = snake_str.split('_')
+    # We capitalize the first letter of each component except the first one
+    # with the 'title' method and join them together.
+    return components[0] + ''.join(x.title() for x in components[1:])
 
 
 def get_asset_dir_prefix():

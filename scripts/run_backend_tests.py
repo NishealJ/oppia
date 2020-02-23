@@ -73,6 +73,7 @@ DIRS_TO_ADD_TO_SYS_PATH = [
     os.path.join(common.OPPIA_TOOLS_DIR, 'browsermob-proxy-0.7.1'),
     os.path.join(common.OPPIA_TOOLS_DIR, 'selenium-3.13.0'),
     os.path.join(common.OPPIA_TOOLS_DIR, 'Pillow-6.0.0'),
+    os.path.join(common.OPPIA_TOOLS_DIR, 'psutil-%s' % common.PSUTIL_VERSION),
     common.CURR_DIR,
     os.path.join(common.THIRD_PARTY_DIR, 'backports.functools_lru_cache-1.5'),
     os.path.join(common.THIRD_PARTY_DIR, 'beautifulsoup4-4.7.1'),
@@ -104,7 +105,7 @@ ALL_ERRORS = []
 LOG_LINE_PREFIX = 'LOG_INFO_TEST: '
 _LOAD_TESTS_DIR = os.path.join(os.getcwd(), 'core', 'tests', 'load_tests')
 
-MAX_CONCURRENT_RUNS = 24
+MAX_CONCURRENT_RUNS = 25
 
 _PARSER = argparse.ArgumentParser(description="""
 Run this script from the oppia root folder:
@@ -527,9 +528,6 @@ def main(args=None):
 
         report_stdout, _ = process.communicate()
         python_utils.PRINT(report_stdout)
-
-        python_utils.PRINT('Generating xml coverage report...')
-        subprocess.check_call([sys.executable, COVERAGE_MODULE_PATH, 'xml'])
 
         coverage_result = re.search(
             r'TOTAL\s+(\d+)\s+(\d+)\s+(?P<total>\d+)%\s+', report_stdout)

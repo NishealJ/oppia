@@ -15,6 +15,7 @@
 # limitations under the License.]
 
 """Getter commands for for topic models."""
+
 from __future__ import absolute_import  # pylint: disable=import-only-modules
 from __future__ import unicode_literals  # pylint: disable=import-only-modules
 
@@ -142,6 +143,8 @@ def get_topic_from_model(topic_model):
             versioned_additional_story_references)
     return topic_domain.Topic(
         topic_model.id, topic_model.name,
+        topic_model.abbreviated_name,
+        topic_model.thumbnail_filename,
         topic_model.description, [
             topic_domain.StoryReference.from_dict(reference)
             for reference in versioned_canonical_story_references[
